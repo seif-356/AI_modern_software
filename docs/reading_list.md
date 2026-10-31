@@ -49,3 +49,20 @@ Full texts were **not** read by Claude; each member must read the ★ papers bef
 |---|---|---|---|
 | 20 | Le Goues, Nguyen, Forrest, Weimer – GenProg: A Generic Method for Automatic Software Repair | IEEE TSE 2012 | Classic pre-LLM APR. [P1] |
 | 21 | Zhang et al. – [A Systematic Literature Review on LLMs for Automated Program Repair](https://arxiv.org/abs/2405.01466) | arXiv (v4, 2025) | Field overview (189 papers); scope changed across versions — cite the one you read. |
+
+## 6. Multi-agent focus (added 2026-10-31)
+
+Already above: #5 UniDebugger, #8 MAGIS, #12 AgentCoder (multi-agent); #4 Agentless, #7 Huang (evidence against).
+⚠ = only title/abstract snippet confirmed; numbers not checked.
+
+| # | Paper | Venue | Why |
+|---|---|---|---|
+| 22 ★ | Tran, Kiela – [Single-Agent LLMs Outperform Multi-Agent Systems on Multi-Hop Reasoning Under Equal Thinking Token Budgets](https://arxiv.org/abs/2604.02460) | arXiv, Apr 2026 | Single agent ≥ multi-agent when token budget is equal. Explicitly excludes tool use / code execution → our RQ1 tests exactly that gap. |
+| 23 ★ | Cemri, Pan et al. – [Why Do Multi-Agent LLM Systems Fail? (MAST)](https://arxiv.org/abs/2503.13657) | NeurIPS 2025 | 14 failure modes in 3 categories (design, inter-agent misalignment, verification). Use to classify our multi-agent failures. |
+| 24 | Huawei et al. – [CodeR: Issue Resolving with Multi-Agent and Task Graphs](https://arxiv.org/abs/2406.01304) | arXiv 2024 | Reproducer, localizer, editor, verifier on a fixed task graph; notes free agent chat can loop forever → justifies a fixed LangGraph graph. 28.33% SWE-bench Lite. |
+| 25 | Hong, Zhuge et al. – [MetaGPT: Meta Programming for a Multi-Agent Collaborative Framework](https://arxiv.org/abs/2308.00352) | ICLR 2024 | Role-based agents with structured hand-offs; naive agent chaining compounds hallucinations. |
+| 26 | Qian et al. – [ChatDev: Communicative Agents for Software Development](https://aclanthology.org/2024.acl-long.810) | ACL 2024 | Chat-chain design/code/test agents; "communicative dehallucination". |
+| 27 | Du, Li, Torralba, Tenenbaum, Mordatch – [Improving Factuality and Reasoning through Multiagent Debate](https://arxiv.org/abs/2305.14325) | ICML 2024 | Main evidence *for* multiple agents (fewer hallucinations) — but compute not matched (see #22). |
+| 28 ⚠ | [MarsCode Agent: AI-native Automated Bug Fixing](https://arxiv.org/abs/2409.00899) | arXiv 2024 | Industrial multi-agent bug fixing (ByteDance). |
+| 29 ⚠ | [SGAgent: Suggestion-Guided Multi-Agent Framework for Repository-Level Software Repair](https://arxiv.org/abs/2602.23647) | arXiv 2026 | Localizer → suggester → fixer; repo-level. |
+| 30 ⚠ | [MultiFixer: Coordinator-Proposer Multi-Agent Framework for Multi-Hunk Bugs](https://arxiv.org/abs/2607.26591) | arXiv 2026 | Multi-agent for bugs needing edits in several places. Results not checked. |
