@@ -19,10 +19,13 @@ Datasets: QuixBugs-Python, ConDefects-Python sample.
 
 ## Team
 
-<!-- TODO: names and student IDs; each member commits their own work -->
-- Member 1 – datasets & evaluation module
-- Member 2 – agents & FastAPI
-- Member 3 – dashboard, manual labelling, statistics
+Each member commits their own work. Split to be confirmed by the team.
+
+| Name | ID | Planned area |
+|---|---|---|
+| Seif Zaki | 202201554 | Datasets & evaluation module |
+| Karim Wael | 202202212 | Agents & FastAPI |
+| Kareem Ezzaldin | 202201972 | Dashboard, manual labelling, statistics |
 
 ## Labs
 

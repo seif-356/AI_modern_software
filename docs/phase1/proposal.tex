@@ -1,5 +1,7 @@
 % SW403 Course Project -- Phase 1: Proposal & Background Study
 % Compile on Overleaf (pdfLaTeX). Target length: 2-3 pages.
+% Lines marked "TODO(verify)" rely on abstracts/search summaries only:
+% confirm them against the full papers before submission.
 \documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{amsmath}
@@ -12,35 +14,36 @@
 \title{Does Multi-Agent Collaboration Really Help LLM Bug Fixing?\\
 A Budget-Controlled, Contamination-Aware Study}
 
-% TODO: replace with real names, IDs and emails (2-3 members).
 \author{
-\IEEEauthorblockN{Member 1 (ID)}
-\IEEEauthorblockA{Zewail City of Science and Technology\\ email}
+\IEEEauthorblockN{Seif Zaki}
+\IEEEauthorblockA{Zewail City of Science and Technology\\ ID: 202201554}
 \and
-\IEEEauthorblockN{Member 2 (ID)}
-\IEEEauthorblockA{Zewail City of Science and Technology\\ email}
+\IEEEauthorblockN{Karim Wael}
+\IEEEauthorblockA{Zewail City of Science and Technology\\ ID: 202202212}
 \and
-\IEEEauthorblockN{Member 3 (ID)}
-\IEEEauthorblockA{Zewail City of Science and Technology\\ email}
+\IEEEauthorblockN{Kareem Ezzaldin}
+\IEEEauthorblockA{Zewail City of Science and Technology\\ ID: 202201972}
 }
 
 \maketitle
 
 \begin{abstract}
-LLM-based automated program repair (APR) increasingly relies on multi-agent
-pipelines in which specialised agents localise, patch and review bugs. Reported
-gains are hard to interpret for three reasons: multi-agent systems usually spend
-more LLM calls than the baselines they are compared with; patches that pass the
-available tests (plausible) are often still incorrect; and popular benchmarks
-such as QuixBugs are public, likely part of LLM training data, and already
-saturated. We propose a controlled study and prototype that compares a
-single-shot LLM, a single-agent iterative repair loop and a LangGraph
-multi-agent pipeline (localiser, fixer, test-runner tool, reviewer) under an
-identical per-bug LLM-call budget. We evaluate on QuixBugs-Python and a sample
-of the leakage-oriented ConDefects-Python dataset, measuring plausible and
-correct fix rates on held-out tests, overfitting rate, a hallucination taxonomy,
-cost, and a memorisation probe based on identifier-renamed programs. The
-prototype is exposed as a FastAPI service with a Streamlit dashboard.
+Multi-agent LLM pipelines, in which specialised agents localise, patch and
+review bugs, report strong results in automated program repair (APR):
+UniDebugger reports fixing every QuixBugs bug, and MAGIS resolves eight times
+more GitHub issues than direct use of GPT-4. However, Tran and Kiela recently
+showed that on multi-hop reasoning a single agent matches or outperforms
+multi-agent systems once the thinking-token budget is equal, suggesting that
+part of the multi-agent advantage is extra compute. Whether this holds for code
+repair, where agents receive feedback from executing tests, is open. We propose
+a controlled study and prototype that compares a single-shot LLM, a
+single-agent iterative loop and a LangGraph multi-agent pipeline (localiser,
+fixer, test-runner tool, reviewer) under identical per-bug budgets of LLM calls
+and output tokens. On QuixBugs-Python and a ConDefects-Python sample we measure
+correct fix rate on held-out tests, plausible-but-incorrect patches, a
+hallucination taxonomy, cost, and memorisation using identifier-renamed
+programs. The prototype is exposed as a FastAPI service with a Streamlit
+dashboard.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -49,163 +52,183 @@ hallucination, data contamination
 \end{IEEEkeywords}
 
 \section{Introduction and Problem Definition}
-Automated program repair has been studied for over a decade, from search-based
-tools such as GenProg~\cite{genprog} to today's LLM-based systems. LLMs changed
-the field quickly: conversational repair with test feedback fixed 162 of 337
-Defects4J bugs at about \$0.42 per bug~\cite{chatrepair}; autonomous agents that
-call tools repaired 164 Defects4J bugs~\cite{repairagent}; and a hierarchical
-multi-agent framework reports fixing all QuixBugs programs~\cite{unidebugger}.
+LLM-based program repair has moved from single prompts to agents, and from
+single agents to teams of agents. MAGIS~\cite{magis} assigns four roles
+(Manager, Repository Custodian, Developer, QA Engineer) to resolve GitHub
+issues and reports an eight-fold higher resolved ratio than direct GPT-4 on
+SWE-bench. UniDebugger~\cite{unidebugger} organises agents hierarchically,
+following cognitive debugging theory, and reports fixing all QuixBugs bugs.
 
-These results are difficult to compare, and three confounds stand out.
-\textbf{(1) Budget.} A multi-agent pipeline usually makes more LLM calls than
-its baseline, so part of its advantage may simply be extra compute. Agentless, a
-fixed localise-then-repair pipeline without an agent loop, was competitive with
-agent-based systems on SWE-bench Lite~\cite{agentless}.
-\textbf{(2) Plausible is not correct.} Qi et al.\ showed that the overwhelming
-majority of patches reported by earlier generate-and-validate tools were not
-correct~\cite{qi2015}; a passing test suite is weak evidence of a fix.
-\textbf{(3) Contamination and saturation.} QuixBugs~\cite{quixbugs} dates from
-2017 and its fixes are public. ChatGPT fixed 31/40 of its Python bugs with
-dialogue~\cite{sobania}, GPT-4o 38/40 and o1 40/40~\cite{gpto1}. A benchmark at
-its ceiling cannot show improvement, and memorisation cannot be separated from
-repair ability. A related concern is that LLMs struggle to self-correct
-without external feedback~\cite{selfcorrect}, so a ``reviewer'' agent may
-approve wrong patches rather than catch them.
+Whether the \emph{team} is what helps is less clear. Tran and
+Kiela~\cite{trankiela} observe that most multi-agent evaluations compare against
+a single agent that uses much less computation. When thinking-token budgets are
+equal, a single agent matched or outperformed sequential, debate, role-based and
+ensemble multi-agent systems on multi-hop reasoning. Agentless~\cite{agentless}
+points the same way in software engineering: a fixed pipeline without an agent
+loop was competitive with agent-based systems. Tran and Kiela studied text
+reasoning only; in repair, agents also receive test-execution feedback, and
+long failure logs may degrade a single agent's context, the condition under
+which they expect multi-agent systems to regain an advantage.
+
+Two further confounds affect repair results. Patches that pass the available
+tests (\emph{plausible}) are often not correct~\cite{qi2015}. And
+QuixBugs~\cite{quixbugs} is public and saturated: o1 fixes 40/40 of its
+Python bugs~\cite{gpto1}, so it can neither show improvement nor separate
+repair ability from memorisation.
 
 \textbf{Problem statement.} Does multi-agent collaboration improve LLM-based bug
 fixing once budget, patch correctness and contamination are controlled?
 
-\textbf{Planned contributions.} (a) A budget-matched comparison of single-shot,
-single-agent and multi-agent repair with the same model; (b) a held-out-test
-correctness check and a hallucination taxonomy for repair agents; (c) a
+\textbf{Planned contributions.} (a) An equal-budget comparison of single-shot,
+single-agent and multi-agent repair with the same model; (b) correctness on
+held-out tests and a hallucination taxonomy for repair agents; (c) a
 memorisation probe using semantics-preserving identifier renaming; (d) an open
 prototype (FastAPI, LangGraph, Streamlit).
 
-\section{Related Work}
-\textbf{Patch correctness.} Qi et al.~\cite{qi2015} distinguish plausible
-patches (pass the validation tests) from correct ones and find that most
-reported patches of GenProg, RSRepair and AE were not correct, many equivalent
-to deleting functionality. We adopt this distinction as a core metric.
+\section{Literature Review}
+Our review centres on three works: the closest multi-agent repair system, the
+multi-agent design whose ablation we adapt, and the equal-budget evidence that
+motivates our main question (Table~\ref{tab:rw}).
 
-\textbf{LLM-based repair.} Sobania et al.~\cite{sobania} evaluated ChatGPT on
-QuixBugs-Python and found that follow-up hints raised its fixes to 31/40.
-ChatRepair~\cite{chatrepair} interleaves patch generation with test-failure
-feedback in a conversation. Self-Debugging~\cite{selfdebug} shows that execution
-feedback helps LLMs correct their own code. These are single-agent loops; our
-single-agent baseline follows this design.
+\textbf{UniDebugger~\cite{unidebugger} (EMNLP 2025).} \emph{Problem:} fault
+localisation and repair are usually solved by separate tools. \emph{Method:} a
+hierarchical multi-agent framework whose coordination follows cognitive
+debugging theory; lower levels localise and fix, and more agents are engaged
+for harder bugs. \emph{Results:} it reports fixing all QuixBugs bugs and more
+Defects4J bugs than prior repair methods.
+% TODO(verify): confirm UniDebugger also evaluates on ConDefects and Codeflaws,
+% its exact Defects4J numbers, and which single-agent baselines it uses.
+\emph{Relevance:} it is the closest system to ours and uses our primary
+dataset, so it is our main point of comparison. \emph{Open for us:} whether its
+gain persists against a single agent given the same budget.
 
-\textbf{Agents and multi-agent systems.} SWE-agent~\cite{sweagent} and
-RepairAgent~\cite{repairagent} let one LLM plan and call tools autonomously.
-UniDebugger (earlier FixAgent)~\cite{unidebugger} organises several agents
-hierarchically for localisation and repair. Agentless~\cite{agentless} is a
-counterpoint: a fixed pipeline without an agent loop was competitive on
-SWE-bench Lite at low cost.
+\textbf{MAGIS~\cite{magis} (NeurIPS 2024).} \emph{Problem:} resolving
+repository-level GitHub issues. \emph{Method:} four role-based agents split
+the work into planning and coding; a QA Engineer reviews the Developer's
+changes. \emph{Results:} 13.94\% of SWE-bench issues resolved, eight times
+direct GPT-4; without the QA Engineer 10.63\%, without hints 10.28\%, without
+both 8.71\%. \emph{Relevance:} its ablation shows that removing the reviewer
+costs about a quarter of the fixes, which motivates our reviewer ablation.
+\emph{Open for us:} its baseline is a single direct GPT-4 call, not a
+single agent with the same budget, and its tasks are repository-level rather
+than function-level bugs checked against held-out tests.
 
-\textbf{Benchmarks.} Defects4J~\cite{defects4j} (Java) and SWE-bench~\cite{swebench}
-(repository-level Python) are standard but expensive to run in a course
-setting. HumanEvalFix~\cite{octopack} provides 164 human-written buggy
-functions with tests. ConDefects~\cite{condefects} collects 1,625 Python and
-1,254 Java faulty AtCoder programs written between October 2021 and September
-2023, specifically to reduce training-data leakage.
+\textbf{Tran and Kiela~\cite{trankiela} (arXiv 2026).} \emph{Problem:} are
+multi-agent gains due to architecture or to extra compute? \emph{Method:} a
+single agent is compared with several multi-agent designs at matched
+thinking-token budgets, supported by an information-theoretic argument based
+on the Data Processing Inequality.
+% TODO(verify): benchmarks (FRAMES, MuSiQue) and models (Qwen3, DeepSeek-R1,
+% Gemini 2.5) come from secondary summaries.
+\emph{Results:} the single agent matches or outperforms multi-agent systems;
+multi-agent systems become competitive when the single agent's context is
+degraded or more compute is spent. \emph{Relevance:} it defines our
+equal-budget design and gives a testable hypothesis for repair. \emph{Caveat:}
+it is a preprint and covers text reasoning, not code execution.
 
 \begin{table}[t]
-\caption{Representative prior work}
+\caption{Core related work and our position}
 \label{tab:rw}
 \centering
 \footnotesize
-\begin{tabular}{@{}>{\raggedright}p{1.35cm}>{\raggedright}p{1.6cm}>{\raggedright}p{1.35cm}>{\raggedright\arraybackslash}p{2.9cm}@{}}
+\begin{tabular}{@{}>{\raggedright}p{1.25cm}>{\raggedright}p{1.55cm}>{\raggedright}p{1.65cm}>{\raggedright\arraybackslash}p{2.75cm}@{}}
 \toprule
-Work & Approach & Benchmark & Key result / limitation for us \\
+Work & Task / data & Key result & What we add \\
 \midrule
-Sobania~\cite{sobania} & ChatGPT dialogue & QuixBugs-Py & 31/40 with hints; benchmark likely in training data \\
-ChatRepair~\cite{chatrepair} & Single agent, test feedback & Defects4J & 162/337 at \$0.42/bug; single agent only \\
-RepairAgent~\cite{repairagent} & Autonomous tool-using agent & Defects4J (835) & 164 fixed; one agent, not multi-agent \\
-UniDebugger~\cite{unidebugger} & Hierarchical multi-agent & QuixBugs + others & Reports all QuixBugs fixed; benchmark at ceiling \\
-Agentless~\cite{agentless} & Fixed pipeline, no agent & SWE-bench Lite & Competitive with agents; questions need for agents \\
-Hu et al.~\cite{gpto1} & GPT family comparison & QuixBugs-Py & o1 40/40, GPT-4o 38/40; saturation \\
+UniDebugger~\cite{unidebugger} & Localisation + repair; QuixBugs, Defects4J & All QuixBugs bugs fixed & Single agent with equal budget; held-out tests \\
+MAGIS~\cite{magis} & Repo-level issues; SWE-bench & 13.94\%; 10.63\% without QA agent & Reviewer ablation on function-level bugs vs.\ held-out tests \\
+Tran \& Kiela~\cite{trankiela} & Multi-hop QA & Single $\geq$ multi at equal tokens & Same question for repair with test execution \\
+\midrule
+This work & Function-level repair; QuixBugs, ConDefects & -- & Equal budget, held-out tests, renaming probe \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+\textbf{Supporting work.} Qi et al.~\cite{qi2015} show that most patches of
+earlier repair tools were plausible but incorrect, which defines our correctness
+metric. Self-Debugging~\cite{selfdebug} shows that execution feedback helps
+LLMs fix their own code; our single-agent baseline follows it. LLMs struggle to
+self-correct without external feedback~\cite{selfcorrect}, so a reviewer agent
+may approve wrong patches. MAST~\cite{mast} offers a taxonomy of multi-agent
+failures that we use to classify ours. ConDefects~\cite{condefects} provides
+1,625 Python faulty programs from 2021--2023 built to reduce training-data
+leakage.
+
 \section{Research Gap and Questions}
-Table~\ref{tab:rw} shows that multi-agent repair is mostly reported as fix
-counts on benchmarks that are saturated and likely contaminated, and we are not
-aware of a study that jointly controls LLM-call budget, patch overfitting and
-contamination at a scale a small team can replicate. We ask:
+Multi-agent repair systems report gains over prior methods~\cite{unidebugger,magis},
+while the equal-budget evidence against multi-agent systems comes from text
+reasoning~\cite{trankiela}. We are not aware of an equal-budget single- versus
+multi-agent comparison for program repair with test execution that also checks
+patches against held-out tests. We ask:
 
-\textbf{RQ1 (Effectiveness under equal budget).} Does a multi-agent pipeline fix
-more bugs than a single-agent iterative loop when both receive the same per-bug
-LLM-call budget? \emph{Metrics:} plausible and correct fix rate, paired per bug.
+\textbf{RQ1 (Equal budget).} With the same per-bug budget of LLM calls and output
+tokens, does a multi-agent pipeline fix more bugs than a single-agent iterative
+loop? \emph{Hypothesis~\cite{trankiela}:} no on short programs; possibly yes
+when long test logs degrade the single agent's context. \emph{Metric:} correct
+fix rate, paired per bug, analysed against prompt length.
 
-\textbf{RQ2 (Validation and hallucination).} Does a reviewer agent reduce
-plausible-but-incorrect patches and hallucinations, or does it approve them?
-\emph{Metrics:} overfitting rate, reviewer precision/recall against held-out
-test outcomes, hallucination counts per category.
+\textbf{RQ2 (Reviewer).} Does a reviewer agent reduce plausible-but-incorrect
+patches, as MAGIS's ablation suggests~\cite{magis}, or does it approve
+them~\cite{selfcorrect}? \emph{Metrics:} overfitting rate, reviewer
+precision/recall against held-out test outcomes, hallucination counts.
 
-\textbf{RQ3 (Contamination).} How much does repair success drop on
+\textbf{RQ3 (Contamination).} How much does success drop on
 semantics-preserving, identifier-renamed versions of the same programs, and
-does the drop differ between QuixBugs and ConDefects?
-\emph{Metric:} change in correct fix rate.
+does the drop differ between QuixBugs and ConDefects? \emph{Metric:} change in
+correct fix rate.
 
 \section{Proposed Approach and Evaluation Plan}
-\textbf{Datasets.} (i) QuixBugs-Python: 40 programs, each with a one-line bug,
-test cases and a reference fix~\cite{quixbugs}. (ii) A random sample of about
-100 ConDefects-Python bugs stratified by difficulty, using the dataset's
-test cases~\cite{condefects}. (iii) Renamed variants of (i) and (ii), produced
-with Python's \texttt{ast} module and checked by running the reference fix.
-For each bug, tests are split into \emph{visible} tests (given to the
-systems) and \emph{held-out} tests (used only for evaluation).
+\textbf{Datasets.} (i) QuixBugs-Python: 40 programs with a one-line bug,
+tests and a reference fix~\cite{quixbugs}. (ii) About 100 ConDefects-Python
+bugs sampled by difficulty~\cite{condefects}. (iii) Renamed variants of (i)
+and (ii), produced with Python's \texttt{ast} module and checked by running the
+reference fix. Each bug's tests are split into \emph{visible} tests (given to
+the systems) and \emph{held-out} tests (used only for evaluation).
 
-\textbf{Systems.} All systems use the same LLM, temperature and a budget of
-$K$ LLM calls per bug (e.g., $K=8$); token usage is logged because calls differ
-in length.
+\textbf{Systems.} All use the same LLM and temperature and stop at $K$ LLM
+calls or $T$ output tokens per bug (e.g., $K=8$), whichever comes first.
 \begin{itemize}
 \item \textbf{S0, single-shot:} one prompt, one patch.
-\item \textbf{S1, single-agent loop:} patch, run visible tests, return failures
-to the model, repeat until pass or budget exhausted~\cite{selfdebug,chatrepair}.
+\item \textbf{S1, single agent:} patch, run visible tests, return failures to
+the model, repeat until pass or budget exhausted~\cite{selfdebug}.
 \item \textbf{S2, multi-agent (LangGraph):} Localiser (LLM) $\rightarrow$ Fixer
-(LLM) $\rightarrow$ Test-runner (deterministic sandboxed tool, not an LLM)
-$\rightarrow$ Reviewer (LLM, approve or reject with reason), looping back to the
-Fixer on failure or rejection.
+(LLM) $\rightarrow$ Test-runner (sandboxed tool, not an LLM) $\rightarrow$
+Reviewer (LLM), looping to the Fixer on failure or rejection.
 \item \textbf{S2$-$R:} S2 without the Reviewer (ablation for RQ2).
 \end{itemize}
-We plan one commercial API model and one open-weights code model (e.g.,
-Qwen2.5-Coder) to test whether findings generalise, subject to cost.
 
-\textbf{Evaluation module (automatic checker).} Applies each patch in a
-sandboxed subprocess with a timeout, runs visible and held-out tests and labels
-the outcome \emph{correct}, \emph{plausible-but-incorrect} or \emph{failing}.
-It also flags hallucinations: (H1) non-runnable code; (H2) non-existent API or
-import; (H3) edits outside the buggy function or to the tests; (H4) unchanged
-code reported as fixed; (H5) reviewer approval of a patch that fails held-out
-tests. Two members manually compare a random 20\% of plausible patches with the
-reference fix and report Cohen's $\kappa$.
+\textbf{Evaluation module.} Runs each patch in a sandboxed subprocess with a
+timeout against visible and held-out tests and labels it \emph{correct},
+\emph{plausible-but-incorrect} or \emph{failing}. It flags hallucinations:
+(H1) non-runnable code; (H2) non-existent API; (H3) edits outside the buggy
+function or to tests; (H4) unchanged code reported as fixed; (H5) reviewer
+approval of a patch that fails held-out tests. Multi-agent failures are also
+mapped to MAST categories~\cite{mast}. Two members compare a random 20\% of
+plausible patches with the reference fix and report Cohen's $\kappa$.
 
-\textbf{Analysis.} Three runs per bug and condition; we report means with 95\%
-confidence intervals and use McNemar's test on paired per-bug correctness
-(S1 vs.\ S2, S2 vs.\ S2$-$R).
+\textbf{Analysis.} Three runs per bug and condition; means with 95\% confidence
+intervals; McNemar's test on paired per-bug correctness (S1 vs.\ S2, S2 vs.\
+S2$-$R).
 
-\textbf{Prototype.} FastAPI endpoint \texttt{POST /repair} accepting
-\{code, tests, mode\} and returning \{patch, verdict, agent trace, tokens\};
-LangGraph orchestration; a Streamlit dashboard for fix rates, hallucination
-breakdown, cost and per-bug traces.
+\textbf{Prototype.} FastAPI \texttt{POST /repair} taking \{code, tests, mode\}
+and returning \{patch, verdict, agent trace, tokens\}; LangGraph orchestration;
+a Streamlit dashboard for fix rates, hallucinations, cost and per-bug traces.
 
 \textbf{Threats and expected SOTA answer.} Contamination cannot be removed
-entirely: current models may have been trained after ConDefects' time window,
-which RQ3 partly measures. QuixBugs has only 40 bugs, so intervals will be
-wide. Since o1 and UniDebugger already report 40/40 on QuixBugs, we do not
-expect to beat the state of the art in raw fix count there; our contribution is
-the controlled comparison and the correctness and contamination analysis.
+entirely; RQ3 measures part of it. QuixBugs has 40 bugs, so intervals will be
+wide. Since UniDebugger and o1 already fix all QuixBugs bugs, we do not expect
+to beat the state of the art in raw fix count; our contribution is the
+controlled comparison and the correctness and contamination analysis.
 
 \section{Timeline and Work Split}
 \textbf{Wk 7:} proposal. \textbf{Wk 8:} dataset loaders, sandbox, S0/S1.
 \textbf{Wk 9:} S2 in LangGraph, evaluation module, FastAPI.
-\textbf{Wk 10:} early results on QuixBugs (Phase 2).
-\textbf{Wk 11--12:} ConDefects sample, renaming probe, manual labelling.
+\textbf{Wk 10:} early QuixBugs results (Phase 2).
+\textbf{Wk 11--12:} ConDefects, renaming probe, manual labelling.
 \textbf{Wk 13:} dashboard and statistics. \textbf{Wk 14:} paper and demo.
-% TODO: assign names.
-\emph{Member 1:} datasets and evaluation module. \emph{Member 2:} agents and
-FastAPI. \emph{Member 3:} dashboard, manual labelling and statistics. All members
+% TODO: confirm the split with the team.
+\emph{Seif Zaki:} datasets and evaluation module. \emph{Karim Wael:} agents and
+FastAPI. \emph{Kareem Ezzaldin:} dashboard, labelling and statistics. All members
 write the report and commit their own work.
 
 \section*{AI Tools Declaration}
@@ -214,77 +237,56 @@ Claude Code (Anthropic) was used to search for and verify literature and to
 draft this proposal. All content was reviewed and edited by the authors.
 
 \begin{thebibliography}{99}
-\bibitem{genprog}
-C.~Le~Goues, T.~Nguyen, S.~Forrest, and W.~Weimer, ``GenProg: A generic method
-for automatic software repair,'' \emph{IEEE Trans. Softw. Eng.}, vol.~38,
-no.~1, pp.~54--72, 2012.
+\bibitem{unidebugger}
+C.~Lee, C.~S.~Xia, L.~Yang, J.~Huang, Z.~Zhu, L.~Zhang, and M.~R.~Lyu,
+``UniDebugger: Hierarchical multi-agent framework for unified software
+debugging,'' in \emph{Proc. EMNLP}, 2025, arXiv:2404.17153.
+
+\bibitem{magis}
+W.~Tao, Y.~Zhou, Y.~Wang, W.~Zhang, H.~Zhang, and Y.~Cheng, ``MAGIS: LLM-based
+multi-agent framework for GitHub issue resolution,'' in \emph{Proc. NeurIPS},
+2024.
+
+\bibitem{trankiela}
+D.~Tran and D.~Kiela, ``Single-agent LLMs outperform multi-agent systems on
+multi-hop reasoning under equal thinking token budgets,'' arXiv:2604.02460,
+2026.
+
+\bibitem{agentless}
+C.~S.~Xia, Y.~Deng, S.~Dunn, and L.~Zhang, ``Agentless: Demystifying LLM-based
+software engineering agents,'' in \emph{Proc. FSE}, 2025, arXiv:2407.01489.
 
 \bibitem{qi2015}
 Z.~Qi, F.~Long, S.~Achour, and M.~Rinard, ``An analysis of patch plausibility
 and correctness for generate-and-validate patch generation systems,'' in
 \emph{Proc. ISSTA}, 2015.
 
-\bibitem{quixbugs}
-D.~Lin, J.~Koppel, A.~Chen, and A.~Solar-Lezama, ``QuixBugs: A multi-lingual
-program repair benchmark set based on the Quixey challenge,'' in \emph{Proc.
-SPLASH Companion}, 2017.
-
-\bibitem{defects4j}
-R.~Just, D.~Jalali, and M.~D.~Ernst, ``Defects4J: A database of existing faults
-to enable controlled testing studies for Java programs,'' in \emph{Proc.
-ISSTA}, 2014.
-
-\bibitem{sobania}
-D.~Sobania, M.~Briesch, C.~Hanna, and J.~Petke, ``An analysis of the automatic
-bug fixing performance of ChatGPT,'' in \emph{Proc. Int. Workshop on Automated
-Program Repair (APR)}, 2023, pp.~23--30.
-
-\bibitem{chatrepair}
-C.~S.~Xia and L.~Zhang, ``Automated program repair via conversation: Fixing 162
-out of 337 bugs for \$0.42 each using ChatGPT,'' in \emph{Proc. ISSTA}, 2024.
-
 \bibitem{selfdebug}
 X.~Chen, M.~Lin, N.~Sch\"arli, and D.~Zhou, ``Teaching large language models to
 self-debug,'' in \emph{Proc. ICLR}, 2024.
-
-\bibitem{repairagent}
-I.~Bouzenia, P.~Devanbu, and M.~Pradel, ``RepairAgent: An autonomous, LLM-based
-agent for program repair,'' in \emph{Proc. ICSE}, 2025.
-
-\bibitem{sweagent}
-J.~Yang, C.~E.~Jimenez, A.~Wettig, K.~Lieret, S.~Yao, K.~Narasimhan, and
-O.~Press, ``SWE-agent: Agent-computer interfaces enable automated software
-engineering,'' in \emph{Proc. NeurIPS}, 2024.
-
-\bibitem{agentless}
-C.~S.~Xia, Y.~Deng, S.~Dunn, and L.~Zhang, ``Agentless: Demystifying LLM-based
-software engineering agents,'' in \emph{Proc. FSE}, 2025, arXiv:2407.01489.
-
-\bibitem{unidebugger}
-C.~Lee \emph{et al.}, ``UniDebugger: Hierarchical multi-agent framework for
-unified software debugging,'' in \emph{Proc. EMNLP}, 2025, arXiv:2404.17153.
-
-\bibitem{gpto1}
-H.~Hu, Y.~Shang, G.~Xu, C.~He, and Q.~Zhang, ``Can GPT-O1 kill all bugs? An
-evaluation of GPT-family LLMs on QuixBugs,'' in \emph{Proc. Int. Workshop on
-Automated Program Repair (APR)}, 2025, arXiv:2409.10033.
 
 \bibitem{selfcorrect}
 J.~Huang \emph{et al.}, ``Large language models cannot self-correct reasoning
 yet,'' in \emph{Proc. ICLR}, 2024.
 
-\bibitem{swebench}
-C.~E.~Jimenez \emph{et al.}, ``SWE-bench: Can language models resolve
-real-world GitHub issues?'' in \emph{Proc. ICLR}, 2024.
+\bibitem{mast}
+M.~Cemri, M.~Pan \emph{et al.}, ``Why do multi-agent LLM systems fail?'' in
+\emph{Proc. NeurIPS}, 2025, arXiv:2503.13657.
 
-\bibitem{octopack}
-N.~Muennighoff \emph{et al.}, ``OctoPack: Instruction tuning code large
-language models,'' in \emph{Proc. ICLR}, 2024.
+\bibitem{quixbugs}
+D.~Lin, J.~Koppel, A.~Chen, and A.~Solar-Lezama, ``QuixBugs: A multi-lingual
+program repair benchmark set based on the Quixey challenge,'' in \emph{Proc.
+SPLASH Companion}, 2017.
 
 \bibitem{condefects}
 Y.~Wu \emph{et al.}, ``ConDefects: A complementary dataset to address the data
 leakage concern for LLM-based fault localization and program repair,'' in
 \emph{Proc. FSE Companion (Demo)}, 2024, arXiv:2310.16253.
+
+\bibitem{gpto1}
+H.~Hu, Y.~Shang, G.~Xu, C.~He, and Q.~Zhang, ``Can GPT-O1 kill all bugs? An
+evaluation of GPT-family LLMs on QuixBugs,'' in \emph{Proc. Int. Workshop on
+Automated Program Repair (APR)}, 2025, arXiv:2409.10033.
 \end{thebibliography}
 
 \end{document}
