@@ -1,0 +1,6 @@
+Difference between my tests and the AI-generated tests:
+
+My tests check one value each with a single assert (7, 10, 2) and only cover
+normal positive numbers. The AI-generated tests use @pytest.mark.parametrize to
+check many values per test, and they also cover edge cases I didn't test:
+0, 1, negative numbers, perfect squares like 49, and large numbers like 7919.
