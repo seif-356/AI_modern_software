@@ -10,7 +10,7 @@ are controlled?
 
 | Phase | Deliverable | Location | Status |
 |---|---|---|---|
-| 1 | Proposal & literature review (IEEE, 2–3 pages) | [`docs/phase1/proposal.tex`](docs/phase1/proposal.tex) | Draft |
+| 1 | Proposal & literature review (IEEE, 2–3 pages) | [`docs/phase1/AI_modern_software_phase1.pdf`](docs/phase1/AI_modern_software_phase1.pdf) (source: [`proposal.tex`](docs/phase1/proposal.tex)) | Submitted |
 | 2 | Prototype, experimental setup, early results | `src/` (planned) | Not started |
 | 3 | Full prototype, 6–8 page paper, demo | – | Not started |
 
