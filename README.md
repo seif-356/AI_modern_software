@@ -60,7 +60,7 @@ Each member commits their own work. Split to be confirmed by the team.
 |---|---|---|
 | Seif Zaki | 202201554 | Datasets & evaluation module |
 | Karim Wael | 202202212 | Agents & FastAPI |
-| Kareem Ezzaldin | 202201972 | Dashboard, manual labelling, statistics |
+| Ahmed Ayman | 202200168 | Dashboard, manual labelling, statistics |
 
 ## Labs
 
