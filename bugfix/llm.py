@@ -150,7 +150,7 @@ class OpenAICompatibleLLM:
             except Exception as err:  # rate limits / transient network errors
                 detail = f"{err} {getattr(err, 'code', '')} {getattr(err, 'body', '')}"
                 if any(code in detail for code in FATAL_API_CODES) or re.search(r"per ?day", detail, re.I):
-                    raise QuotaExhausted(str(err)) from err
+                    raise QuotaExhausted(detail[:2000]) from err
                 last_err = err
                 rate_limited = "429" in detail or "RESOURCE_EXHAUSTED" in detail
                 time.sleep(_retry_after(detail) if rate_limited else 2 ** min(attempt, 5))

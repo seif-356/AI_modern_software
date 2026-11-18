@@ -34,7 +34,7 @@ without the reviewer (S2$-$R). An automatic evaluator runs every final patch in
 a sandbox against \emph{held-out} tests the systems never see, separating
 correct from plausible-but-incorrect patches and flagging five hallucination
 types. We report early results on 31 QuixBugs Python bugs with Gemini 3.5
-Flash-Lite, three runs per bug and system. %RESULTS_ABSTRACT%
+Flash-Lite, three runs per bug and system. In the 228 attempts completed so far, all four systems fix 96--98\% of bugs, the multi-agent pipeline costs 3.3$\times$ the output tokens of the single agent for one extra fix, and the only failures are plausible-but-incorrect patches that pass every visible test.
 \end{abstract}
 
 \section{Changes Since Phase 1}
@@ -103,7 +103,58 @@ calls and tokens per attempt. Systems are compared with exact McNemar tests on
 paired (bug, run) correctness.
 
 \section{Early Results}
-%RESULTS_SECTION%
+\textbf{Status.} The free tier allows 500 requests per day, so the run is
+split over two days. These results cover 228 of 372 attempts (runs 1--2 of 3);
+the final numbers will replace them in the repository and in Phase 3.
+
+\begin{table}[h]
+\caption{Early results, 31 QuixBugs bugs, gemini-3.5-flash-lite}
+\label{tab:res}
+\centering
+\footnotesize
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+System & Att. & Correct [95\% CI] & Pl.-incorr. & Calls & Out tok \\
+\midrule
+S0 single-shot & 57 & 0.965 [0.90, 1.00] & 0.035 & 1.00 & 110 \\
+S1 single agent & 58 & 0.966 [0.90, 1.00] & 0.034 & 1.00 & 106 \\
+S2 multi-agent & 56 & 0.982 [0.95, 1.00] & 0.018 & 3.79 & 355 \\
+S2$-$R no reviewer & 57 & 0.965 [0.90, 1.00] & 0.035 & 2.11 & 189 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{../../results/figures/outcomes.png}
+\caption{Outcome of each attempt: correct, plausible-but-incorrect, failing.}
+\end{figure}
+
+\textbf{RQ1 (equal budget).} All systems are at the ceiling (Table~\ref{tab:res}).
+S2 is correct on one more (bug, run) pair than S1; exact McNemar $p=1.0$, so there
+is no evidence of a difference. S2 spends 3.8 calls and 3.3$\times$ the output
+tokens of S1 per attempt. S1 never needed a second call: every first patch passed
+the visible tests, so on QuixBugs the test-feedback loop is never exercised and
+S0 and S1 are equivalent. QuixBugs therefore cannot separate the systems, as
+anticipated in Phase 1; ConDefects is needed.
+
+\textbf{RQ2 (reviewer).} The reviewer issued 20 rejections over 56 S2 attempts,
+mostly of patches later approved in another form; 6 attempts used the whole
+budget of 8 calls. Of the 52 final patches it judged, it approved 50 correct ones,
+approved 1 wrong one (H5) and rejected 1 correct one; it caught none of the wrong
+patches. Removing it (S2$-$R) lost one fix and halved the cost.
+
+\textbf{Hallucination and overfitting.} No patch was non-runnable, used a
+non-existent API, changed the signature or returned the code unchanged (H1--H4 =
+0). All failures are on \texttt{max\_sublist\_sum}: every system replaced the
+buggy line with the textbook Kadane variant that returns the largest element
+for an all-negative list ($-4$ for \texttt{[-4,-4,-5]}), while the function's
+docstring allows the empty sublist (answer 0). The patch passes all three
+visible tests and fails a held-out one: a plausible-but-incorrect patch produced
+from a memorised algorithm rather than the specification, and the S2 reviewer
+approved it once. This is the failure mode the held-out tests were designed to
+catch~\cite{quixbugs}.
+
 
 \section{Threats to Validity}
 QuixBugs is public, saturated~\cite{gpto1} and likely in the model's training
