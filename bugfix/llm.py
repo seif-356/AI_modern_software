@@ -16,7 +16,7 @@ class QuotaExhausted(RuntimeError):
     """The API account has no credit left; retrying cannot help."""
 
 
-FATAL_API_CODES = ("insufficient_quota", "credit_balance_exhausted", "invalid_api_key", "no credits remaining")
+FATAL_API_CODES = ("insufficient_quota", "credit_balance_exhausted", "invalid_api_key", "no credits remaining", "no longer available", "NOT_FOUND")
 
 
 class BudgetExceeded(Exception):
