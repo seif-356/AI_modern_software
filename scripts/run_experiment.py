@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bugfix import SYSTEMS, Budget, evaluate, load_bugs  # noqa: E402
-from bugfix.llm import OpenAICompatibleLLM  # noqa: E402
+from bugfix.llm import OpenAICompatibleLLM, QuotaExhausted  # noqa: E402
 
 
 def git_commit() -> str:
@@ -92,6 +92,10 @@ def main():
                 r = fut.result()
                 print(f"[{i}/{len(jobs)}] {bug.id} {system} run{run}: {r['label']} "
                       f"({r['usage']['calls']} calls, {r['usage']['output_tokens']} out tok)")
+            except QuotaExhausted as err:
+                print(f"STOPPING: API account problem, fix it and re-run (finished runs are kept): {err}")
+                pool.shutdown(wait=False, cancel_futures=True)
+                break
             except Exception as err:  # keep going; the triple stays missing and is retried on resume
                 print(f"[{i}/{len(jobs)}] {bug.id} {system} run{run}: ERROR {err}")
 

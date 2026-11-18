@@ -12,6 +12,13 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 
+class QuotaExhausted(RuntimeError):
+    """The API account has no credit left; retrying cannot help."""
+
+
+FATAL_API_CODES = ("insufficient_quota", "credit_balance_exhausted", "invalid_api_key", "no credits remaining")
+
+
 class BudgetExceeded(Exception):
     """Raised when a system tries to call the model after its budget is spent."""
 
@@ -109,6 +116,9 @@ class OpenAICompatibleLLM:
                     temperature=self.temperature, max_tokens=max_tokens,
                 )
             except Exception as err:  # rate limits / transient network errors
+                detail = f"{err} {getattr(err, 'code', '')} {getattr(err, 'body', '')}"
+                if any(code in detail for code in FATAL_API_CODES):
+                    raise QuotaExhausted(str(err)) from err
                 last_err = err
                 time.sleep(2 ** attempt)
                 continue
