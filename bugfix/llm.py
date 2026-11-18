@@ -7,6 +7,8 @@ comparison (RQ1) enforceable rather than a convention.
 from __future__ import annotations
 
 import os
+import re
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -79,6 +81,29 @@ def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+class RateLimiter:
+    """Spaces calls evenly so all worker threads together stay under `rpm` requests/minute."""
+
+    def __init__(self, rpm: float):
+        self.interval = 60.0 / rpm if rpm > 0 else 0.0
+        self.next_slot = 0.0
+        self.lock = threading.Lock()
+
+    def wait(self) -> None:
+        if not self.interval:
+            return
+        with self.lock:
+            now = time.monotonic()
+            slot = max(now, self.next_slot)
+            self.next_slot = slot + self.interval
+        time.sleep(max(0.0, slot - now))
+
+
+def _retry_after(detail: str, default: float = 30.0) -> float:
+    m = re.search(r"retry in ([0-9.]+)s", detail)
+    return min(120.0, float(m.group(1)) + 1.0) if m else default
+
+
 class OpenAICompatibleLLM:
     """Any OpenAI-compatible chat endpoint (OpenAI, Groq, OpenRouter, Ollama...).
 
@@ -86,11 +111,15 @@ class OpenAICompatibleLLM:
       LLM_MODEL      model name (required)
       LLM_BASE_URL   endpoint, default https://api.openai.com/v1
       LLM_API_KEY    key (falls back to OPENAI_API_KEY)
+      LLM_RPM        optional client-side cap on requests per minute (e.g. 14 for a 15 RPM free tier)
+
+    Rate-limit errors are retried after the delay the API asks for and are never
+    charged to the budget; only completed calls count.
     """
 
     def __init__(self, model: str | None = None, base_url: str | None = None,
                  api_key: str | None = None, temperature: float = 0.2,
-                 per_call_max_tokens: int = 1500, retries: int = 4):
+                 per_call_max_tokens: int = 1500, retries: int = 10, rpm: float | None = None):
         from openai import OpenAI
 
         self.model = model or os.environ.get("LLM_MODEL") or ""
@@ -102,13 +131,16 @@ class OpenAICompatibleLLM:
         self.client = OpenAI(
             base_url=base_url or os.environ.get("LLM_BASE_URL") or "https://api.openai.com/v1",
             api_key=api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"),
+            max_retries=0,  # retries are handled below so rate-limit waits are explicit
         )
+        self.limiter = RateLimiter(rpm if rpm is not None else float(os.environ.get("LLM_RPM", "0")))
 
     def chat(self, messages: list[dict], budget: Budget, role: str) -> str:
         budget.check()
         max_tokens = max(1, min(self.per_call_max_tokens, budget.remaining_tokens))
         last_err: Exception | None = None
         for attempt in range(self.retries):
+            self.limiter.wait()
             t0 = time.time()
             try:
                 resp = self.client.chat.completions.create(
@@ -117,10 +149,11 @@ class OpenAICompatibleLLM:
                 )
             except Exception as err:  # rate limits / transient network errors
                 detail = f"{err} {getattr(err, 'code', '')} {getattr(err, 'body', '')}"
-                if any(code in detail for code in FATAL_API_CODES):
+                if any(code in detail for code in FATAL_API_CODES) or re.search(r"per ?day", detail, re.I):
                     raise QuotaExhausted(str(err)) from err
                 last_err = err
-                time.sleep(2 ** attempt)
+                rate_limited = "429" in detail or "RESOURCE_EXHAUSTED" in detail
+                time.sleep(_retry_after(detail) if rate_limited else 2 ** min(attempt, 5))
                 continue
             text = resp.choices[0].message.content or ""
             usage = getattr(resp, "usage", None)
