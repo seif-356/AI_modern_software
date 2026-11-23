@@ -17,6 +17,12 @@ are controlled?
 Stack: Python, LangGraph (agents), FastAPI (`POST /repair`), Streamlit (dashboard).
 Datasets: QuixBugs-Python (Phase 2), ConDefects-Python sample (Phase 3).
 
+## Project documentation
+
+- [Architecture and repair API](docs/architecture.md) traces one repair through the four systems and includes a request you can try locally.
+- [Experiment guide](docs/experiments.md) explains how to inspect the saved run, start or resume an experiment, and interpret the results.
+- [Phase 2 report](docs/phase2/phase2_report.pdf) covers the research design, early findings and limitations.
+
 ## Replication package (Phase 2)
 
 | Path | What it is |
@@ -33,24 +39,18 @@ Datasets: QuixBugs-Python (Phase 2), ConDefects-Python sample (Phase 3).
 | `scripts/analyze.py` | Tables, bootstrap CIs, exact McNemar tests, figures → `results/` |
 | `tests/` | Plumbing tests (scripted model, no API calls) and dataset validation |
 
-### Reproduce
+### Quick start
+
+Run these commands from the repository root in a Linux shell (WSL on Windows). Use Python 3.12 with `venv` and `pip` available. The candidate test harness uses Unix process limits and timers.
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python -m pytest                       # 44 tests, no API key needed
-export LLM_API_KEY=...                 # your key; never commit it
-export LLM_MODEL=...                   # e.g. a small, cheap chat model
-# optional: export LLM_BASE_URL=https://api.groq.com/openai/v1  (any OpenAI-compatible endpoint)
-python scripts/run_experiment.py --systems s0 s1 s2 s2r --runs 3 --max-calls 8 --max-tokens 8000
-python scripts/analyze.py
-streamlit run dashboard/app.py
-uvicorn bugfix.api:app                 # then POST /repair
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest
 ```
 
-Rebuild the dataset (optional): `git clone https://github.com/jkoppel/QuixBugs && python scripts/prepare_quixbugs.py --src QuixBugs`.
-
-**Excluded from Phase 2:** the 9 QuixBugs graph programs (they use `node.py` objects, not JSON tests); listed in `data/quixbugs/manifest.json`.
+To explore the 372 saved attempts, run `python -m streamlit run dashboard/app.py` in the same environment. Both the tests and the dashboard work without model credentials. For a quick look without installing anything, open the [saved results summary](results/summary.md).
 
 ## Team
 
