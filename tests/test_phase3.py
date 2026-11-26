@@ -13,6 +13,25 @@ from bugfix.bugs import load_bugs
 from bugfix.sandbox import run_tests
 
 
+def test_full_dataset_dry_runs_reuse_only_identical_inputs(monkeypatch, capsys, tmp_path):
+    from argparse import Namespace
+    import run_phase3
+
+    # Use the frozen original results and empty extension files. A dry run
+    # must never request credentials, even with work left to do.
+    for cohort, count in [("full-quixbugs", 112), ("full-condefects", 0)]:
+        args = Namespace(profile="openai", cohort=cohort, dry_run=True)
+        run_phase3.run_cohort(args, tmp_path / "new.jsonl")
+        assert f"{count} attempts remaining" in capsys.readouterr().out
+    paths = []
+    monkeypatch.setattr(run_phase3, "ROOT", tmp_path)
+    monkeypatch.setattr(run_phase3, "run_cohort", lambda args, out: paths.append(out))
+    for cohort in ("full-quixbugs", "full-condefects"):
+        monkeypatch.setattr(sys, "argv", ["run_phase3", "--profile", "openai", "--cohort", cohort, "--dry-run"])
+        run_phase3.main()
+    assert [p.name for p in paths] == ["openai-full-quixbugs.jsonl", "openai-full-condefects.jsonl"]
+
+
 def test_matched_panel_manifest_and_source_pairs():
     path = ROOT / "data/phase3/bugs.jsonl"
     digest = json.loads(path.with_name("manifest.json").read_text())["sha256"]
