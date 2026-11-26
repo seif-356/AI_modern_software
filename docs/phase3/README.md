@@ -80,6 +80,25 @@ python scripts/run_muse_full.py --lane 3
 
 For fresh browser collection, use a separate checkout with empty lane files and add `--collect` to a lane command. Open the loopback form on port 18220 plus the lane number. Send its prompt in a fresh Muse side chat in Edge, capture the complete first response with the site's copy control for each code block, and submit the response on the local form. The collector runs the tests and supplies each subsequent role prompt. The protocol measures at most four accepted browser submissions per trial. The web app exposes no verifiable API model ID or token budget.
 
+## Full-dataset model runs
+
+The [coverage table](../../results/phase3/full-models/coverage.csv) joins the original and expanded studies by exact input and workflow. A scored failure counts as a completed trial. The table uses Gemini repeat zero for the four pass-count columns. The archive retains all three repeats. The 100-task ConDefects sample excludes the three contest tasks in the matched panel.
+
+Run the audit locally to regenerate the totals and a list of every missing cell.
+
+~~~sh
+python scripts/full_model_coverage.py --missing missing-runs.csv
+~~~
+
+The new cohorts are `full-quixbugs` and `full-condefects`. Append `--dry-run` to inspect the remaining work without inference. Each local model can serve both cohorts in one session.
+
+~~~sh
+python scripts/run_phase3.py --profile openai --cohort full-quixbugs --dry-run
+python scripts/run_local.py --profile qwen --server /path/to/llama-server --weights /path/to/models --cohort full-quixbugs full-condefects
+~~~
+
+These cohorts reuse rows only when the original input, tests, model and generation settings match. New rows are saved after scoring. The expansion uses the same four-call and 1,536-output-token attempt budgets, with up to 512 output tokens per call. The runner checks the 16,384-byte prompt limit before inference. If a later prompt exceeds the limit, the scorer evaluates the candidate available at that point and records `input_limit`. A later request that the local server rejects for exceeding its context window similarly records `context_limit`. An oversized initial prompt is an unexecuted trial. Add `--paper` to the coverage audit to regenerate the paper table after all four GPT/local samples are complete. The original matched panel, breadth experiment, archived Gemini runs and Muse browser supplement remain identifiable by their source files.
+
 ## Model execution
 
 The [provider notes](../../results/phase3/provider_notes.md) document endpoints, actual status and measured usage. The [MAST trace table](../../results/phase3/mast_failures.csv) links failed S2 attempts to observed repetition, specification or verification failures. Other diagnoses remain unresolved when the trace does not distinguish them. For the optional Windows demo recording, start Streamlit on port 18185 and run `python scripts/record_demo.py` with Playwright, Edge, ffmpeg and the local System.Speech synthesizer installed.

@@ -14,3 +14,9 @@ The November 26, 2026 experiments use an archived Gemini block, local model weig
 | Local llama.cpp | Qwen2.5-Coder-1.5B-Instruct, SmolLM2-1.7B-Instruct and DeepSeek-Coder-1.3B-Instruct use pinned GGUF files on loopback endpoints. These runs incur no provider API fees. Model revisions and weight checksums are in the [guide](../../docs/phase3/README.md) and [local runner](../../scripts/run_local.py). |
 
 The [budget audit](budget_audit.csv) includes every recorded attempt. It flags a known breach when reported totals exceed the call or output cap, or exceed the per-call cap multiplied by completed calls. Where a per-call usage trace is available, the check also uses its violation flag. Earlier records contain aggregate usage, which cannot detect every possible single-call overrun.
+
+### Full-dataset extension
+
+The [full-dataset coverage table](full-models/coverage.csv) includes the supplementary trials. GPT completed the 112 missing QuixBugs cells using 168,752 input tokens and 32,365 output tokens in the scored attempts. The estimated uncached cost for those records is US$0.0742. An interrupted S2-R trial on `wrap` was restarted once when the next feedback prompt exceeded the input byte limit. Its partial usage is unavailable. Even allowing four maximum-size calls for that interrupted attempt, total added usage at standard rates was under US$0.10. The existing 400 GPT ConDefects scores and 12 matching QuixBugs scores supply the other cells.
+
+Local runs use the same pinned weights and loopback endpoints as the matched panel. Concurrent model servers were briefly tried during the extension. The Qwen ConDefects job was interrupted during local inference and continued from saved scores to allow one model at a time on the GPU. The expansion collector records the last candidate and `input_limit` when later feedback exceeds the input cap. The earliest extension rows record the base commit of the working checkout, as in the original study.

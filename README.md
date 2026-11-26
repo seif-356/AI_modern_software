@@ -19,6 +19,8 @@ Datasets: QuixBugs-Python (Phase 2), ConDefects-Python sample (Phase 3).
 
 ## Phase 3 replication package
 
+GPT-5.4 nano, Qwen2.5-Coder 1.5B, SmolLM2 1.7B and DeepSeek-Coder 1.3B each completed all four workflows on all 31 original QuixBugs programs and 100 ConDefects tasks. The extension adds 1,648 scored trials and reuses 448 previously measured cells. Table VIII of the [Phase 3 paper](docs/phase3/phase3_report.pdf) gives the pass counts. The [coverage audit](results/phase3/full-models/coverage.csv) identifies remaining gaps by model and provider route.
+
 The [supplementary Muse web-app panel](docs/phase3/README.md#supplementary-muse-browser-panel) covers 48 attempts. All four workflows passed the held-out tests on the same 10 of 12 variants.
 
 The [full Muse browser evaluation](docs/phase3/README.md#full-muse-browser-evaluation) covers all 31 original QuixBugs programs and all 100 ConDefects tasks across four workflows. Each workflow passed both test partitions on 30 QuixBugs programs. On ConDefects, S0 passed 96 tasks, S1 passed 97, and S2 and S2-R each passed 98.

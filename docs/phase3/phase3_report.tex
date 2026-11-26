@@ -3,6 +3,7 @@
 \usepackage{booktabs,amsmath,graphicx,url}
 \usepackage[hidelinks]{hyperref}
 \input{evidence}
+\input{full_model_rows}
 \title{When a Code Reviewer Agrees with a Wrong Patch:\\Budget-Controlled Language-Model Repair on Python Bugs}
 \author{\IEEEauthorblockN{SW403 project research draft for team review}
 \IEEEauthorblockA{AI in Modern Software Engineering, Zewail City of Science and Technology\\
@@ -189,6 +190,23 @@ S2-R & 31 & 30 & 62 & 100 & 98 & 200\\\bottomrule
 \end{table}
 
 All four QuixBugs workflows timed out on one held-out Levenshtein case during collection. The S0 patch passed that case on a subsequent local execution, so this result depends on runtime. On ConDefects, S2 and S2-R passed both partitions on the same 98 tasks. Both missed ABC354 A and ABC285 A despite passing every visible example. The two workflows differed by 103 measured messages. These are observations of the browser product with one trial per cell. The underlying model version and token budget were unavailable.
+
+\subsection{Full-dataset extension for GPT and local models}
+We applied the four workflows once to each original QuixBugs program and each breadth-sample ConDefects task using GPT-5.4 nano, Qwen2.5-Coder 1.5B, SmolLM2 1.7B and DeepSeek-Coder 1.3B. Each model already had 12 workflow results on three identical QuixBugs inputs. GPT also had all 400 ConDefects results. These 448 earlier observations and 1,648 newly scored trials cover the 2,096 model--task--workflow combinations. The earlier observations retain their original scores. The Muse browser product and the three-repeat Gemini archive have separate measurement protocols.
+
+\begin{table}[ht]
+\centering
+\caption{Tasks passing both test partitions. Each workflow saw all 31 original QuixBugs programs or all 100 ConDefects tasks.}
+\label{tab:full-models}
+\begin{tabular}{llrrrr}\toprule
+Dataset & Model & S0 & S1 & S2 & S2-R\\\midrule
+\FullModelRows
+\bottomrule\end{tabular}
+\end{table}
+
+On ConDefects, moving from S1 to S2 changed the pass counts from 80 to 71 for GPT, 8 to 5 for Qwen, 4 to 9 for SmolLM2 and 8 to 11 for DeepSeek-Coder. The direction of the change depended on the model. These counts describe one trial per cell on the selected tasks.
+
+The local models used the same pinned quantized weights as the matched panel. Eight new QuixBugs trials on \texttt{wrap} stopped when a later prompt reached the input byte limit or the local context limit. The scorer evaluated the candidate available at that point. All eight stops are identified in the raw records.
 
 \section{Discussion}
 \subsection{Where extra calls go}

@@ -23,7 +23,7 @@ def records(path):
         return [json.loads(line) for line in stream if line.strip()]
 
 
-def audit(missing_file=None):
+def audit(missing_file=None, paper=False):
     panel = {b["id"]: b for b in records(COHORT_DATA["panel"])}
     summary, missing = [], []
     for dataset, size in (("quixbugs", 31), ("condefects", 100)):
@@ -81,9 +81,25 @@ def audit(missing_file=None):
                 writer = csv.DictWriter(stream, fieldnames=fields)
                 writer.writeheader()
                 writer.writerows(rows)
+    if paper:
+        names = {"openai": "GPT-5.4 nano", "qwen": "Qwen Coder", "smollm2": "SmolLM2",
+                 "deepseek-coder": "DeepSeek-Coder"}
+        lines = []
+        for row in summary:
+            if row["profile"] not in names:
+                continue
+            if row["missing"]:
+                raise ValueError(f"Incomplete paper sample: {row['profile']} {row['dataset']}")
+            cohort = "QuixBugs" if row["dataset"] == "quixbugs" else "ConDefects"
+            values = [str(row[mode + "_correct"]) for mode in MODES]
+            lines.append(" & ".join([cohort, names[row["profile"]], *values]) + r"\\")
+        path = ROOT / "docs/phase3/full_model_rows.tex"
+        path.write_text("\\newcommand{\\FullModelRows}{%\n" + "\n".join(lines) + "%\n}\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--missing", type=Path, help="Also write the individual missing task/workflow cells.")
-    audit(parser.parse_args().missing)
+    parser.add_argument("--paper", action="store_true", help="Generate the full-dataset table after collection.")
+    args = parser.parse_args()
+    audit(args.missing, args.paper)
