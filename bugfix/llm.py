@@ -34,6 +34,7 @@ class Budget:
     output_tokens: int = 0
     latency_s: float = 0.0
     log: list[dict] = field(default_factory=list)
+    input_limit_reached: bool = False
 
     @property
     def remaining_calls(self) -> int:
@@ -121,7 +122,7 @@ class OpenAICompatibleLLM:
     def __init__(self, model: str | None = None, base_url: str | None = None,
                  api_key: str | None = None, temperature: float = 0.2,
                  per_call_max_tokens: int = 1500, retries: int = 10, rpm: float | None = None,
-                 max_prompt_bytes: int | None = None):
+                 max_prompt_bytes: int | None = None, stop_at_prompt_limit: bool = False):
         from openai import OpenAI
 
         self.model = model or os.environ.get("LLM_MODEL") or ""
@@ -131,6 +132,7 @@ class OpenAICompatibleLLM:
         self.per_call_max_tokens = per_call_max_tokens
         self.retries = retries
         self.max_prompt_bytes = max_prompt_bytes
+        self.stop_at_prompt_limit = stop_at_prompt_limit
         self.client = OpenAI(
             base_url=base_url or os.environ.get("LLM_BASE_URL") or "https://api.openai.com/v1",
             api_key=api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"),
@@ -143,6 +145,9 @@ class OpenAICompatibleLLM:
         if self.max_prompt_bytes is not None:
             size = sum(len(m["content"].encode("utf-8")) + 32 for m in messages)
             if size > self.max_prompt_bytes:
+                if self.stop_at_prompt_limit and budget.calls:
+                    budget.input_limit_reached = True
+                    raise BudgetExceeded("Next prompt exceeds the input limit")
                 raise ValueError("Prompt exceeds the configured input limit")
         max_tokens = max(1, min(self.per_call_max_tokens, budget.remaining_tokens))
         last_err: Exception | None = None

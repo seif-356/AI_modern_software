@@ -47,6 +47,21 @@ def test_matched_panel_manifest_and_source_pairs():
         assert {t["id"] for t in twin.visible_tests}.isdisjoint(t["id"] for t in twin.heldout_tests)
 
 
+def test_full_cohort_input_limit_preserves_observed_attempt():
+    from bugfix.llm import Budget, BudgetExceeded, OpenAICompatibleLLM
+
+    client = OpenAICompatibleLLM(model="local", base_url="http://127.0.0.1:1/v1", api_key="local",
+                                 max_prompt_bytes=8, stop_at_prompt_limit=True)
+    budget = Budget(4, 1536)
+    messages = [{"role": "user", "content": "Example input"}]
+    with pytest.raises(ValueError, match="input limit"):
+        client.chat(messages, budget, "repair")
+    budget.charge("repair", 20, 5, 0)
+    with pytest.raises(BudgetExceeded, match="input limit"):
+        client.chat(messages, budget, "repair")
+    assert budget.input_limit_reached and budget.calls == 1
+
+
 def test_local_renaming_keeps_recursive_calls():
     bug = load_bugs(ROOT / "data/quixbugs/bugs.jsonl", ["quixbugs/gcd"])[0]
     twin = renamed(bug)

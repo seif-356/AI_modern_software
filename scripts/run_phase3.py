@@ -115,6 +115,7 @@ def run_cohort(args, out):
         retries=4 if free_route else 1,
         rpm=6 if free_route else 0,
         max_prompt_bytes=16384,
+        stop_at_prompt_limit=args.cohort.startswith("full-"),
     )
     # Validate the free route against the live catalog before sending any prompts.
     if args.profile == "orca":
@@ -146,7 +147,7 @@ def run_cohort(args, out):
             commit=commit,
             timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
             wall_s=round(time.monotonic() - t0, 2),
-            stop_reason=result.stop_reason,
+            stop_reason="input_limit" if budget.input_limit_reached else result.stop_reason,
             passed_visible=result.passed_visible,
             reviewer_approved=result.reviewer_approved,
             usage=result.usage,
