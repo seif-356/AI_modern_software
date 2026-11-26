@@ -1,5 +1,6 @@
 data/phase3/*.jsonl text eol=lf
 data/condefects/*.jsonl text eol=lf
 results/phase3/raw/*.jsonl text eol=lf
+results/phase3/pilots/*.jsonl text eol=lf
 # The review CSV embeds verbatim multiline programs, including whitespace in model output.
 results/phase3/review_packet.csv -text whitespace=-blank-at-eol

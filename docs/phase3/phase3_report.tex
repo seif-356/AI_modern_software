@@ -106,7 +106,7 @@ The reviewer issued decisions on 84 final S2 patches. It approved 81 that passed
 \end{table}
 Each numerator counts attempts whose final patch passes both partitions. Each denominator counts records in that system's run file. Within each row the same base model supplies all roles. Local models use pinned four-bit weights. GPT is a dated hosted snapshot. The hosted DeepSeek V4 Flash row is diagnostic: the free gateway returned 28 of 48 planned attempts before its quota stopped the run. Ten records reported completion usage above the smaller of 1,536 and 512 times the number of completed calls. Four exceeded 1,536. These records cannot support an equal-budget comparison. We retain all 28 traces for inspection and omit the gateway from paired inference. The local DeepSeek Coder model is a distinct checkpoint.
 
-Across the matched panel and breadth study, the 448 GPT attempts used 551,202 input tokens and 210,299 output tokens, an estimated US\$0.37 at the listed uncached rates. The three local models incurred no provider API fees. The Muse API declined generation during billing verification, so the study records no Muse outcome.
+Across the matched panel and breadth study, the 448 GPT attempts used 551,202 input tokens and 210,299 output tokens, an estimated US\$0.37 at the listed uncached rates. The three local models incurred no provider API fees. Meta's API declined generation during billing verification. We evaluated its consumer web app separately.
 
 GPT fixed two of the three original QuixBugs programs under each architecture, and the same two after renaming. The failed maximum-sublist case generalizes the archived reviewer example to another model under a smaller budget. In the contest subset GPT also fixed two of three originals and two of three renamed programs under every architecture. The totals conceal a change in failure type. An S1 original that accepted only 100 passed visible tests and failed a reserved larger multiple. Its renamed counterpart failed visible tests. Binary correctness alone misses that difference.
 
@@ -153,6 +153,22 @@ One GPT S2 trace illustrates why reserved examples remain valuable even when rev
 The reserved sequence $(27,1828,1828,9242)$ makes the difference observable. A hiker following the rule stops at the plateau and reports 1828. The generated program continues to the distant peak and reports 9242. A second reserved sequence that rises throughout also passes the global-maximum implementation. The verdict therefore turns on the placement of one plateau. Finding more tests of the increasing sequence alone would not resolve the ambiguity. The example also supplies the team with a concrete adjudication rationale for a hypothetical patch with the same behavior.
 
 The broader split has 137 visible examples and 144 reserved examples over 100 submissions. With so few cases per task, one example can dominate both the repair decision and the evaluation. The difficulty bands partly address population diversity. They do not increase the number of examples for a given specification. The top band contains only ten tasks, so its interval is especially sensitive to a single outcome. Apparent differences between adjacent points in the figure should be checked against the underlying paired discordances.
+
+\subsection{Supplementary Muse web-app panel}
+We ran all four workflows on the same six programs, each in its original and renamed form, through the Muse web app in Edge. Each role received its prompt in a new side chat. The first GCD pilot supplied its prespecified S0 cell. We used 84 browser submissions across the 48 scored attempts. Before scoring the final panel, we discarded a collection pass with 27 saved replies after finding that some displayed code blocks were incomplete. We then captured complete patches using the site's copy control. The app's model version, internal calls, temperature, token usage and account memory were uncontrolled. We therefore report this panel separately from the 992-attempt study.
+
+\begin{table}[ht]
+\centering
+\caption{Supplementary Muse browser panel. Each workflow saw the same 12 variants. Submissions count messages sent by the experimenter.}
+\begin{tabular}{lrrr}\toprule
+Workflow & Visible pass & Held-out pass & Submissions\\\midrule
+S0   & 12 & 10 & 12\\
+S1   & 12 & 10 & 12\\
+S2   & 12 & 10 & 36\\
+S2-R & 12 & 10 & 24\\\bottomrule
+\end{tabular}
+\end{table}
+All four workflows repaired the same 10 variants. All eight held-out failures came from the original and renamed versions of one contest task, ABC223 A. On both presentations, the S2 reviewer approved a patch that accepted exactly 100. The reserved examples required positive multiples such as 200 and 500 to pass as well. On these six programs, spending additional submissions on localisation and review did not change which variants passed.
 
 \section{Discussion}
 \subsection{Where extra calls go}

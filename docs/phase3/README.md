@@ -48,6 +48,14 @@ python scripts/prepare_condefects.py --src ConDefects --cache ../sw403-example-c
 
 The matched panel uses independent, study-authored contest test oracles and the archived QuixBugs split. Its builder verifies both reference programs and the equality of failing test IDs in each original/renamed pair. The breadth builder reads public English sample inputs and outputs from the linked AtCoder task statements. It validates references, records a visible failure for each submitted program and preserves the source URLs. The cache permits interrupted downloads to resume. Use the checked-in data to replicate the study inputs byte for byte.
 
+## Supplementary Muse browser panel
+
+Muse ran once per workflow and variant on the 12 matched inputs. Each visible submission used a fresh Edge side chat with the repository's role instructions and visible evidence in one message. Local tests supplied feedback to the workflow. The four-submission ceiling applied per attempt. Model identity, token ceilings, temperature, internal tool use and account memory were unverified. No paid API requests or upgrades were used.
+
+The 48 [scored attempts](../../results/phase3/pilots/muse-web-panel.jsonl) use the [original GCD pilot](../../results/phase3/pilots/muse-web-gcd.json) once and [83 subsequent role prompts and replies](../../results/phase3/pilots/muse-web-calls.jsonl). A discarded collection pass recorded 27 additional replies. Some code blocks were truncated during capture. The pass was excluded in full before restarting the remaining 47 attempts. Final collection used persisted replies and Muse's **Copy code** control for patches. Each workflow solved 10 of 12 variants and failed held-out tests on both presentations of ABC223 A.
+
+Run `python scripts/run_muse_web.py` from the repository root to reproduce the 48 scores offline. The replay checks each stored role and prompt, re-executes visible and held-out tests, and writes the supplemental panel file. The primary study tables use their original 992 attempts.
+
 ## Model execution
 
 The [provider notes](../../results/phase3/provider_notes.md) document endpoints, actual status and measured usage. The [MAST trace table](../../results/phase3/mast_failures.csv) links failed S2 attempts to observed repetition, specification or verification failures. Other diagnoses remain unresolved when the trace does not distinguish them. For the optional Windows demo recording, start Streamlit on port 18185 and run `python scripts/record_demo.py` with Playwright, Edge, ffmpeg and the local System.Speech synthesizer installed.
