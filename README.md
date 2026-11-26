@@ -21,6 +21,8 @@ Datasets: QuixBugs-Python (Phase 2), ConDefects-Python sample (Phase 3).
 
 The [supplementary Muse web-app panel](docs/phase3/README.md#supplementary-muse-browser-panel) covers 48 attempts. All four workflows passed the held-out tests on the same 10 of 12 variants.
 
+The [full Muse browser evaluation](docs/phase3/README.md#full-muse-browser-evaluation) covers all 31 original QuixBugs programs and all 100 ConDefects tasks across four workflows. Each workflow passed both test partitions on 30 QuixBugs programs. On ConDefects, S0 passed 96 tasks, S1 passed 97, and S2 and S2-R each passed 98.
+
 On 100 distinct ConDefects tasks, GPT-5.4 nano passed visible and held-out tests on 80 tasks with a single repair agent and test feedback, and 71 with the multi-agent reviewer workflow. Sixteen paired outcomes favored the single agent and seven favored the team (exact McNemar p = 0.093). The [55-second narrated demo](docs/phase3/demo.mp4) shows an actual reviewer approval that fails a held-out test.
 
 The [run inventory](results/phase3/inventory.csv) identifies the models, number of completed attempts, planned counts and token usage. The experiment includes a 100-task [ConDefects sample](data/condefects/), a six-program [original/renamed panel](data/phase3/), [new traces](results/phase3/raw/) and the archived Gemini 3.5 Flash-Lite traces. The [outcome tables](results/phase3/outcomes.csv) keep the cohorts separate.

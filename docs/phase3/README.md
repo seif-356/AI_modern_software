@@ -56,6 +56,30 @@ The 48 [scored attempts](../../results/phase3/pilots/muse-web-panel.jsonl) use t
 
 Run `python scripts/run_muse_web.py` from the repository root to reproduce the 48 scores offline. The replay checks each stored role and prompt, re-executes visible and held-out tests, and writes the supplemental panel file. The primary study tables use their original 992 attempts.
 
+## Full Muse browser evaluation
+
+The [browser logs and scores](../../results/phase3/muse-web-full/) contain one trial per workflow for each of the 31 original QuixBugs programs and 100 ConDefects tasks. Each dataset is divided into four files by input index modulo four. Each score identifies the input by SHA-256 and records the final code, visible and held-out passes, reviewer decision and message count. The 12 trials shared with the matched panel cover GCD, valid parenthesization and maximum sublist sum. Their prompts and replies are in the matched-panel files above. The expanded evaluation used 902 new messages and 21 messages from those shared trials.
+
+| Workflow | QuixBugs passing both partitions (of 31) | ConDefects passing both partitions (of 100) |
+|---|---:|---:|
+| S0 | 30 | 96 |
+| S1 | 30 | 97 |
+| S2 | 30 | 98 |
+| S2-R | 30 | 98 |
+
+We repeated 27 trials in full after finding 34 unresolved code-block placeholders. The [exclusion manifest](../../results/phase3/muse-web-full/excluded-captures.jsonl) identifies those trials and their 63 discarded replies. The table uses only the final captures. Message totals count accepted role responses in scored trials. Browser delivery retries and discarded captures are outside that count.
+
+Run the following from the repository root to replay the expanded study offline. The replay checks roles, prompts, input identities and scores. One faulty ConDefects submission prints a two-element Python set whose display order can vary. Its replay accepts either order in the test feedback. Held-out timeouts can also vary with machine load. The replay reports those timing differences and preserves the originally measured scores. The same Levenshtein case timed out in all four measured QuixBugs workflows.
+
+~~~sh
+python scripts/run_muse_full.py --lane 0
+python scripts/run_muse_full.py --lane 1
+python scripts/run_muse_full.py --lane 2
+python scripts/run_muse_full.py --lane 3
+~~~
+
+For fresh browser collection, use a separate checkout with empty lane files and add `--collect` to a lane command. Open the loopback form on port 18220 plus the lane number. Send its prompt in a fresh Muse side chat in Edge, capture the complete first response with the site's copy control for each code block, and submit the response on the local form. The collector runs the tests and supplies each subsequent role prompt. The protocol measures at most four accepted browser submissions per trial. The web app exposes no verifiable API model ID or token budget.
+
 ## Model execution
 
 The [provider notes](../../results/phase3/provider_notes.md) document endpoints, actual status and measured usage. The [MAST trace table](../../results/phase3/mast_failures.csv) links failed S2 attempts to observed repetition, specification or verification failures. Other diagnoses remain unresolved when the trace does not distinguish them. For the optional Windows demo recording, start Streamlit on port 18185 and run `python scripts/record_demo.py` with Playwright, Edge, ffmpeg and the local System.Speech synthesizer installed.

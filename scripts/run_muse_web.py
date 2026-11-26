@@ -28,8 +28,9 @@ def append(path, row):
 
 
 class FormModel:
-    def __init__(self, replay):
-        rows = [json.loads(line) for line in CALLS.read_text(encoding="utf-8").splitlines()] if CALLS.exists() else []
+    def __init__(self, replay, calls_path=CALLS):
+        self.calls_path = calls_path
+        rows = [json.loads(line) for line in calls_path.read_text(encoding="utf-8").splitlines()] if calls_path.exists() else []
         self.saved = {row["id"]: row for row in rows}
         if len(self.saved) != len(rows):
             raise ValueError("Duplicate browser reply")
@@ -50,11 +51,14 @@ class FormModel:
                 self.pending = dict(id=key, role=role, prompt=prompt)
                 self.cv.wait_for(lambda: key in self.saved)
             record = self.saved[key]
-            if record["prompt"] != prompt or record["role"] != role:
+            if not self.same_prompt(record["prompt"], prompt) or record["role"] != role:
                 raise ValueError(f"Prompt mismatch for {key}")
             self.used.add(key)
         budget.calls += 1  # Only visible submissions are measurable.
         return record["reply"]
+
+    def same_prompt(self, stored, current):
+        return stored == current
 
 
 def collect(model):
@@ -116,9 +120,12 @@ def serve(model, port):
                 job = model.pending
                 if not job or fields.get("id") != [job["id"]] or not fields.get("reply"):
                     return self.send_error(409)
-                row = dict(**job, reply=fields["reply"][0].replace("\r\n", "\n"),
+                reply = fields["reply"][0].replace("\r\n", "\n")
+                if not reply.strip() or "@@BLOCK_" in reply:
+                    return self.send_error(422, "Incomplete browser capture")
+                row = dict(**job, reply=reply,
                            captured_at=datetime.now(timezone.utc).isoformat())
-                append(CALLS, row)
+                append(model.calls_path, row)
                 model.saved[job["id"]] = row
                 model.pending = None
                 model.cv.notify_all()

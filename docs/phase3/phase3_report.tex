@@ -170,6 +170,26 @@ S2-R & 12 & 10 & 24\\\bottomrule
 \end{table}
 All four workflows repaired the same 10 variants. All eight held-out failures came from the original and renamed versions of one contest task, ABC223 A. On both presentations, the S2 reviewer approved a patch that accepted exactly 100. The reserved examples required positive multiples such as 200 and 500 to pass as well. On these six programs, spending additional submissions on localisation and review did not change which variants passed.
 
+\subsection{Muse browser results on the full datasets}
+We evaluated one attempt per workflow on each of the 31 original QuixBugs programs and 100 distinct ConDefects tasks. The 524 cells represent 131 subjects. Three QuixBugs inputs matched the earlier browser panel in every field. We reused and rescored their 12 workflow results (21 messages). The other 512 cells used 902 newly captured messages in Edge. We excluded 27 first-pass trials after a capture audit found 34 missing code blocks and repeated those trials in full. The 63 replies from the excluded trials do not enter the table.
+
+\begin{table}[ht]
+\centering
+\caption{Full Muse browser sample. Visible and Both count tasks passing the visible tests and both partitions, respectively. Msgs counts messages contributing to the scored trials.}
+\label{tab:muse-full}
+\begin{tabular}{lrrrrrr}\toprule
+& \multicolumn{3}{c}{QuixBugs ($n=31$)} & \multicolumn{3}{c}{ConDefects ($n=100$)}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Workflow & Visible & Both & Msgs & Visible & Both & Msgs\\\midrule
+S0   & 31 & 30 & 31 & 98 & 96 & 100\\
+S1   & 31 & 30 & 31 & 100 & 97 & 102\\
+S2   & 31 & 30 & 94 & 100 & 98 & 303\\
+S2-R & 31 & 30 & 62 & 100 & 98 & 200\\\bottomrule
+\end{tabular}
+\end{table}
+
+All four QuixBugs workflows timed out on one held-out Levenshtein case during collection. The S0 patch passed that case on a subsequent local execution, so this result depends on runtime. On ConDefects, S2 and S2-R passed both partitions on the same 98 tasks. Both missed ABC354 A and ABC285 A despite passing every visible example. The two workflows differed by 103 measured messages. These are observations of the browser product with one trial per cell. The underlying model version and token budget were unavailable.
+
 \section{Discussion}
 \subsection{Where extra calls go}
 The agent team commits a call to localisation before it tests a fix. That cost is certain even when the defect is obvious. Its benefit depends on whether the diagnosis draws attention to evidence the fixer would have missed. The same dependency can lead a fixer away from the fault. In the archived \texttt{wrap} trace, the localiser focused on whitespace between lines. The fixer appended a final line, but also altered how spaces were carried into the following line. Subsequent fixes kept modifying the split. The visible tests detected the problem, yet repeated feedback did not dislodge the initial diagnosis. This sequence is consistent with inter-agent misalignment in MAST. A counterfactual run with only the diagnosis changed would be needed to attribute causation.
