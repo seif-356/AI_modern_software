@@ -82,12 +82,17 @@ def main():
                 time.sleep(1)
             else:
                 raise RuntimeError("Local model did not become ready")
+            failed = []
             for cohort in args.cohort:
-                subprocess.run(
+                result = subprocess.run(
                     [sys.executable, "-u", str(ROOT / "scripts/run_phase3.py"),
                      "--profile", args.profile, "--workers", "2", "--cohort", cohort],
-                    check=True, cwd=ROOT,
+                    cwd=ROOT,
                 )
+                if result.returncode:
+                    failed.append(cohort)
+            if failed:
+                raise SystemExit(f"{args.profile}: unfinished cohorts: {', '.join(failed)}")
         finally:
             server.terminate()
             try:

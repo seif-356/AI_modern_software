@@ -139,6 +139,11 @@ def run_cohort(args, out):
         t0 = time.monotonic()
         budget = Budget(MAX_CALLS, MAX_TOKENS)
         result = SYSTEMS[system](bug, llm, budget)
+        stop_reason = result.stop_reason
+        if budget.input_limit_reached:
+            stop_reason = "input_limit"
+        if budget.context_limit_reached:
+            stop_reason = "context_limit"
         return dict(
             **meta,
             bug_id=bug_id,
@@ -147,7 +152,7 @@ def run_cohort(args, out):
             commit=commit,
             timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
             wall_s=round(time.monotonic() - t0, 2),
-            stop_reason="input_limit" if budget.input_limit_reached else result.stop_reason,
+            stop_reason=stop_reason,
             passed_visible=result.passed_visible,
             reviewer_approved=result.reviewer_approved,
             usage=result.usage,
@@ -174,6 +179,12 @@ def run_cohort(args, out):
                     cause = exc.__cause__ or exc
                     status = getattr(cause, "status_code", None)
                     message = f"{key}: {type(cause).__name__} (HTTP {status or '?'})"
+                    if not var and status in {400, 413}:
+                        detail = getattr(cause, "body", {}) or {}
+                        if isinstance(detail, dict):
+                            message += f" local error type={detail.get('type', 'unknown')}"
+                    if not var and isinstance(cause, (ValueError, UnicodeError)):
+                        message += f" {str(cause)[:180]}"
                     if status == 402:
                         body = getattr(cause, "body", None)
                         if isinstance(body, dict):

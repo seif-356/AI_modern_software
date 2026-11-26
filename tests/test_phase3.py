@@ -62,6 +62,26 @@ def test_full_cohort_input_limit_preserves_observed_attempt():
     assert budget.input_limit_reached and budget.calls == 1
 
 
+def test_later_context_rejection_preserves_existing_calls(monkeypatch):
+    from bugfix.llm import Budget, BudgetExceeded, OpenAICompatibleLLM
+
+    class ContextRejection(Exception):
+        status_code = 400
+        body = {"type": "exceed_context_size_error"}
+
+    def reject(**kwargs):
+        raise ContextRejection()
+
+    client = OpenAICompatibleLLM(model="local", base_url="http://127.0.0.1:1/v1", api_key="local",
+                                 retries=1, stop_at_prompt_limit=True)
+    monkeypatch.setattr(client.client.chat.completions, "create", reject)
+    budget = Budget(4, 1536)
+    budget.charge("localiser", 20, 5, 0)
+    with pytest.raises(BudgetExceeded, match="context window"):
+        client.chat([{"role": "user", "content": "fix"}], budget, "fixer")
+    assert budget.context_limit_reached and budget.calls == 1
+
+
 def test_local_renaming_keeps_recursive_calls():
     bug = load_bugs(ROOT / "data/quixbugs/bugs.jsonl", ["quixbugs/gcd"])[0]
     twin = renamed(bug)

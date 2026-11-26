@@ -35,6 +35,7 @@ class Budget:
     latency_s: float = 0.0
     log: list[dict] = field(default_factory=list)
     input_limit_reached: bool = False
+    context_limit_reached: bool = False
 
     @property
     def remaining_calls(self) -> int:
@@ -162,6 +163,10 @@ class OpenAICompatibleLLM:
                 )
             except Exception as err:  # rate limits / transient network errors
                 detail = f"{err} {getattr(err, 'code', '')} {getattr(err, 'body', '')}"
+                if (self.stop_at_prompt_limit and budget.calls and getattr(err, "status_code", None) == 400
+                        and ("exceed_context_size_error" in detail or "exceeds the available context size" in detail)):
+                    budget.context_limit_reached = True
+                    raise BudgetExceeded("Next prompt exceeds the server context window") from err
                 if any(code in detail for code in FATAL_API_CODES) or re.search(r"per ?day", detail, re.I):
                     raise QuotaExhausted(detail[:2000]) from err
                 last_err = err

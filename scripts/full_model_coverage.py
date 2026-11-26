@@ -13,6 +13,9 @@ RAW = ROOT / "results/phase3/raw"
 MODES = ("s0", "s1", "s2", "s2r")
 PROFILES_TO_REPORT = ("openai", "qwen", "smollm2", "deepseek-coder", "orca", "archive-gemini",
                       "muse-web", "muse", "deepseek")
+MODEL_NAMES = {profile: config[0] for profile, config in PROFILES.items()}
+MODEL_NAMES.update({"archive-gemini": "gemini-3.5-flash-lite", "muse-web": "Muse web (Edge)",
+                    "muse": "muse-spark-1.3 (Meta API)", "deepseek": "DeepSeek direct (no model run)"})
 
 
 def records(path):
@@ -61,16 +64,18 @@ def audit(missing_file=None):
                         new_rows.append(row)
                     cells[key] = row
             for bug, mode in sorted(target - cells.keys()):
-                missing.append(dict(profile=profile, dataset=dataset, bug_id=bug, system=mode))
+                missing.append(dict(model_or_route=MODEL_NAMES[profile], dataset=dataset, task_id=bug,
+                                    missing_workflow=mode))
             correct = Counter(mode for (_, mode), r in cells.items() if r["label"] == "correct")
-            summary.append(dict(profile=profile, dataset=dataset, planned=len(target), completed=len(cells),
+            summary.append(dict(profile=profile, model_or_route=MODEL_NAMES[profile], dataset=dataset,
+                                planned=len(target), completed=len(cells),
                                 missing=len(target)-len(cells), newly_collected=len(new_rows),
                                 **{f"{mode}_correct": correct[mode] for mode in MODES},
                                 new_prompt_tokens=sum(r["usage"]["prompt_tokens"] for r in new_rows),
                                 new_output_tokens=sum(r["usage"]["output_tokens"] for r in new_rows)))
     FULL.mkdir(parents=True, exist_ok=True)
     for path, rows, fields in [(FULL / "coverage.csv", summary, summary[0].keys()),
-                               (missing_file, missing, ("profile", "dataset", "bug_id", "system"))]:
+                               (missing_file, missing, ("model_or_route", "dataset", "task_id", "missing_workflow"))]:
         if path:
             with path.open("w", newline="", encoding="utf-8") as stream:
                 writer = csv.DictWriter(stream, fieldnames=fields)
