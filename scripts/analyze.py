@@ -24,7 +24,7 @@ FLAGS = ["H1_non_runnable", "H2_nonexistent_api", "H3_signature_changed", "H4_un
 
 def load(path: Path) -> pd.DataFrame:
     rows = []
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
             r = json.loads(line)
             u = r.pop("usage")
@@ -38,7 +38,7 @@ def load(path: Path) -> pd.DataFrame:
 
 
 def bootstrap_ci(df: pd.DataFrame, col: str, n: int = 2000, seed: int = 403) -> tuple[float, float]:
-    per_bug = df.groupby("bug_id")[col].mean().to_numpy()
+    per_bug = df.groupby("bug_id")[col].mean().tolist()
     if len(per_bug) == 0:
         return (math.nan, math.nan)
     rng = random.Random(seed)

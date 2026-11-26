@@ -1,0 +1,121 @@
+% Editable source for the repository's offline presentation.
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{booktabs}
+\usefonttheme{professionalfonts}
+\usepackage{fontspec}
+\setsansfont{lmsans10-regular.otf}[BoldFont=lmsans10-bold.otf,ItalicFont=lmsans10-oblique.otf,BoldItalicFont=lmsans10-boldoblique.otf]
+\definecolor{Ink}{HTML}{102D36}
+\definecolor{Teal}{HTML}{007269}
+\definecolor{Rust}{HTML}{A4442C}
+\setbeamercolor{normal text}{fg=Ink,bg=white}
+\setbeamercolor{frametitle}{fg=Ink}
+\setbeamercolor{structure}{fg=Teal}
+\setbeamerfont{frametitle}{size=\LARGE,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hspace{.7cm}\color{Teal}\scriptsize SW403 \enspace / \enspace PROGRAM REPAIR\hfill\insertframenumber\hspace{.7cm}\vspace{.22cm}}
+\setbeamersize{text margin left=.85cm,text margin right=.85cm}
+\input{evidence}
+\newcommand{\tagline}[1]{{\color{Teal}\small\bfseries #1}\par}
+\newcommand{\bigvalue}[1]{{\fontsize{28}{31}\selectfont\bfseries #1}\par}
+\begin{document}
+\begin{frame}
+\tagline{AI IN MODERN SOFTWARE ENGINEERING \quad / \quad FALL 2026}
+\vspace{.45cm}
+{\fontsize{29}{32}\selectfont\bfseries When a code reviewer agrees\\with a wrong patch\par}
+\vspace{.5cm}
+Can a team of model agents repair more Python bugs than a single agent with the same budget?
+\vfill
+{\small Zewail City \quad$\cdot$\quad Phase 3 team-review draft \quad$\cdot$\quad Prepared with OpenAI Codex}
+\end{frame}
+
+\begin{frame}{One case separates two plausible repairs}
+\tagline{QUIXBUGS \enspace / \enspace MAXIMUM SUBLIST SUM}
+\vspace{.45cm}
+{\Large Input \quad\texttt{[-4, -4, -5]}}\par\vspace{.55cm}
+\begin{columns}[T,onlytextwidth]
+\column{.46\textwidth}\bigvalue{\color{Rust}$-4$}
+Largest nonempty slice. The reviewer approved this candidate.
+\column{.46\textwidth}\bigvalue{\color{Teal}$0$}
+The specification allows the empty slice. The held-out test requires zero.
+\end{columns}
+\vspace{.55cm}
+The candidate passed all three visible examples.
+\end{frame}
+
+\begin{frame}{Four ways to spend the same call allowance}
+\renewcommand{\arraystretch}{1.46}
+\begin{tabular}{@{}lp{10.5cm}@{}}\toprule
+S0 & Generate one patch.\\
+S1 & Generate, execute visible tests, return failures and retry.\\
+S2 & Localise, fix and test. Review a visible-passing patch and retry on rejection.\\
+S2-R & Localise, fix and test. Stop at the first visible pass.\\\bottomrule
+\end{tabular}\par
+\vspace{.45cm}
+New runs share a ceiling of four calls and 1,536 output tokens per attempt. The evaluator runs reserved tests after the final patch is selected.
+\end{frame}
+
+\begin{frame}{Three experiments answer different questions}
+\begin{columns}[T,onlytextwidth]
+\column{.31\textwidth}\tagline{ARCHIVED GEMINI}\vspace{.16cm}\bigvalue{31}
+QuixBugs functions. Four systems and three runs give 372 attempts.
+\column{.31\textwidth}\tagline{RENAMING PANEL}\vspace{.16cm}\bigvalue{6}
+Programs presented twice. Compare the original and renamed code within each model and system.
+\column{.31\textwidth}\tagline{CONDEFECTS}\vspace{.16cm}\bigvalue{100}
+Distinct contest tasks. Select one submission per task across three difficulty bands.
+\end{columns}
+\vfill{\small Each reference passes its study tests. Each defective program fails at least one visible example.}
+\end{frame}
+
+\begin{frame}{Gemini's reviewer added calls and missed two wrong patches}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}\tagline{S1 \enspace / \enspace SINGLE AGENT}\vspace{.12cm}\bigvalue{90 / 93}
+passed both partitions.\\[.25cm]
+1.00 call and 106 output tokens per attempt.
+\column{.48\textwidth}\tagline{S2 \enspace / \enspace AGENT TEAM}\vspace{.12cm}\bigvalue{89 / 93}
+passed both partitions.\\[.25cm]
+3.76 calls and 341 output tokens per attempt.
+\end{columns}\vspace{.55cm}
+Two paired attempts favored S1 and one favored S2. Both incorrect final patches that reached a reviewer were approved.
+\end{frame}
+
+\begin{frame}{How often did each model repair the matched panel?}
+\tagline{ORIGINAL AND RENAMED VARIANTS COMBINED}
+\vspace{.25cm}
+\centering\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lrrrr}\toprule Model & S0 & S1 & S2 & S2-R\\\midrule
+\PanelRows \bottomrule\end{tabular}\par
+\vspace{.3cm}\raggedright
+Each system has twelve planned attempts per model. The hosted DeepSeek V4 row is diagnostic: quota stopped the run and the gateway exceeded requested token limits.
+\end{frame}
+
+\begin{frame}{Contest results across 100 distinct tasks}
+\tagline{GPT-5.4 NANO \enspace / \enspace ONE RUN PER SYSTEM AND TASK}
+\vspace{.25cm}
+\centering\renewcommand{\arraystretch}{1.24}
+\begin{tabular}{lrrrrr}\toprule System & Attempts & Correct & Visible only & Failing & Mean calls\\\midrule
+\BreadthRows \bottomrule\end{tabular}\par
+\vspace{.3cm}\raggedright
+S1 alone fixed 16 tasks and S2 alone fixed seven (paired exact $p=0.093$). S1 averaged 1.52 calls per task and S2 averaged 3.60.
+\end{frame}
+
+\begin{frame}{Live demo \enspace / \enspace replay a reviewer decision}
+\tagline{OFFLINE \enspace $\cdot$ \enspace ARCHIVED MODEL RESPONSE, FRESH TEST EXECUTION}
+\vspace{.25cm}
+{\ttfamily python scripts/demo\_phase3.py}\par\vspace{.45cm}
+\begin{enumerate}
+\item Read the saved candidate and the reviewer's reason for approval.
+\item Run the visible and held-out tests against that same candidate.
+\item Inspect the all-negative input, expected result and actual result.
+\end{enumerate}
+\vspace{.18cm}
+{\small In Streamlit, select the Gemini archive, \texttt{quixbugs/max\_sublist\_sum}, S2, run 0 to inspect the full trace.}
+\end{frame}
+
+\begin{frame}{What the experiment establishes}
+The held-out tests can expose a shared mistake that survives both fixing and review. The paired task counts measure when extra roles change the result.\par\vspace{.35cm}
+A published GPT-o1 study repaired all 40 QuixBugs programs under its own protocol. This study establishes no improvement over that result.\par\vspace{.35cm}
+\tagline{TEAM REVIEW}
+Two members still need to adjudicate \ReviewSample{} sampled patches independently. The package includes the blinded packet and agreement scorer.\par\vfill
+{\scriptsize Hu et al. (arXiv:2409.10033) and Wu et al. (arXiv:2310.16253). \href{https://github.com/seif-356/AI_modern_software/tree/phase-3-study}{\color{Teal}\bfseries Open the replication package on GitHub.}}
+\end{frame}
+\end{document}

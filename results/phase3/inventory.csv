@@ -1,0 +1,8 @@
+profile,model,attempts,expected,complete,prompt_tokens,output_tokens
+archive-gemini,gemini-3.5-flash-lite,372,372,True,804501,69968
+deepseek-coder,deepseek-coder-1.3b-instruct-q4_k_m,48,48,True,99153,52531
+openai-breadth,gpt-5.4-nano-2026-03-17,400,400,True,516775,201158
+openai,gpt-5.4-nano-2026-03-17,48,48,True,34427,9141
+orca,deepseek/deepseek-v4-flash-free,28,48,False,23220,23321
+qwen,qwen2.5-coder-1.5b-instruct-q4_k_m,48,48,True,56215,10434
+smollm2,smollm2-1.7b-instruct-q4_k_m,48,48,True,68472,15621

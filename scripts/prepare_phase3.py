@@ -1,4 +1,5 @@
 """Rebuild the fixed matched panel from the Phase 2 data and pinned ConDefects checkout."""
+
 import argparse
 import ast
 import dataclasses
@@ -38,6 +39,7 @@ def expected(task, text):
 
 class FunctionAdapter(ast.NodeTransformer):
     """Adapt the selected scripts' one input() and plain single-argument prints."""
+
     def visit_Call(self, node):
         self.generic_visit(node)
         if isinstance(node.func, ast.Name) and node.func.id == "input":
@@ -45,8 +47,11 @@ class FunctionAdapter(ast.NodeTransformer):
             return ast.Name(id="text", ctx=ast.Load())
         if isinstance(node.func, ast.Name) and node.func.id == "print":
             assert len(node.args) == 1 and not node.keywords
-            return ast.Call(ast.Attribute(ast.Name(id="output", ctx=ast.Load()), "append", ast.Load()),
-                            [ast.Call(ast.Name(id="str", ctx=ast.Load()), node.args, [])], [])
+            return ast.Call(
+                ast.Attribute(ast.Name(id="output", ctx=ast.Load()), "append", ast.Load()),
+                [ast.Call(ast.Name(id="str", ctx=ast.Load()), node.args, [])],
+                [],
+            )
         return node
 
 
@@ -73,12 +78,21 @@ def renamed(bug):
             if name and name not in names:
                 names.append(name)
     table = {name: f"v{i}" for i, name in enumerate(names)}
+
     def rewrite(code):
         tokens = tokenize.generate_tokens(io.StringIO(code).readline)
-        return tokenize.untokenize(t._replace(string=table[t.string])
-                                   if t.type == tokenize.NAME and t.string in table else t for t in tokens)
-    return dataclasses.replace(bug, id=bug.id + "/renamed", func_name=table[bug.func_name],
-                               buggy_code=rewrite(bug.buggy_code), reference_code=rewrite(bug.reference_code))
+        return tokenize.untokenize(
+            t._replace(string=table[t.string]) if t.type == tokenize.NAME and t.string in table else t
+            for t in tokens
+        )
+
+    return dataclasses.replace(
+        bug,
+        id=bug.id + "/renamed",
+        func_name=table[bug.func_name],
+        buggy_code=rewrite(bug.buggy_code),
+        reference_code=rewrite(bug.reference_code),
+    )
 
 
 def checked(bug):
@@ -103,12 +117,23 @@ def main():
     for task, sid, visible, held in TASKS:
         stem = f"Code/{task}/Python/{sid}"
         folder = args.src / stem
+
         def read(name):
             return (folder / (name + "Version.py")).read_text(encoding="utf-8-sig")
+
         tests = [{"id": i, "input": [v], "output": expected(task, v)} for i, v in enumerate(visible + held)]
         bug_id = f"condefects/{task}/{sid}"
-        cases.append(Bug(bug_id, "solve", adapt(read("faulty")), adapt(read("correct")),
-                         tests[:len(visible)], tests[len(visible):], source="condefects"))
+        cases.append(
+            Bug(
+                bug_id,
+                "solve",
+                adapt(read("faulty")),
+                adapt(read("correct")),
+                tests[: len(visible)],
+                tests[len(visible) :],
+                source="condefects",
+            )
+        )
         sources[bug_id] = f"https://github.com/appmlk/ConDefects/tree/{revision}/{stem}"
     rows = []
     for bug in cases:
@@ -118,13 +143,23 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     payload = "".join(b.to_json() + "\n" for b in rows).encode("utf-8")
     (args.out / "bugs.jsonl").write_bytes(payload)
-    (args.out / "manifest.json").write_text(json.dumps({
-        "sha256": hashlib.sha256(payload).hexdigest(), "upstream_commit": revision,
-        "selection": "Purposive six-bug panel, three per dataset. Every original has an identifier-renamed twin.",
-        "inputs": "QuixBugs uses its archived split. Contest inputs and expected outputs are study-authored.",
-        "adaptation": "One input line becomes a positional string. Captured print lines become the returned string.",
-        "license": "ConDefects adaptations: CC BY-SA 4.0. QuixBugs adaptations: MIT (see ../quixbugs/QUIXBUGS_LICENSE).",
-        "sources": sources, "ids": [b.id for b in rows]}, indent=2) + "\n", encoding="utf-8")
+    (args.out / "manifest.json").write_text(
+        json.dumps(
+            {
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "upstream_commit": revision,
+                "selection": "Purposive six-bug panel, three per dataset. Every original has an identifier-renamed twin.",
+                "inputs": "QuixBugs uses its archived split. Contest inputs and expected outputs are study-authored.",
+                "adaptation": "One input line becomes a positional string. Captured print lines become the returned string.",
+                "license": "ConDefects adaptations: CC BY-SA 4.0. QuixBugs adaptations: MIT (see ../quixbugs/QUIXBUGS_LICENSE).",
+                "sources": sources,
+                "ids": [b.id for b in rows],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,62 @@
+profile,bug_id,run,outcome,codes,evidence
+archive-gemini,quixbugs/max_sublist_sum,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+archive-gemini,quixbugs/wrap,1,failing,"FM-1.3, FC2",An identical candidate was sent back to failing visible tests. The fix follows the localiser's whitespace diagnosis; see paper discussion.
+archive-gemini,quixbugs/max_sublist_sum,2,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+archive-gemini,quixbugs/wrap,2,failing,"FM-1.3, FC2",An identical candidate was sent back to failing visible tests. The fix follows the localiser's whitespace diagnosis; see paper discussion.
+deepseek-coder,quixbugs/gcd/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+deepseek-coder,quixbugs/is_valid_parenthesization/renamed,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+deepseek-coder,quixbugs/max_sublist_sum,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+deepseek-coder,quixbugs/max_sublist_sum/renamed,0,failing,"FM-1.3, FM-1.1",An identical candidate was sent back to failing visible tests. The final candidate violates the required entry-point signature.
+deepseek-coder,condefects/abc223_a/45813374,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+deepseek-coder,condefects/abc223_a/45813374/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+deepseek-coder,condefects/abc223_b/53513467,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+deepseek-coder,condefects/abc223_b/53513467/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+deepseek-coder,condefects/abc225_a/44428733,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+deepseek-coder,condefects/abc225_a/44428733/renamed,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc235_b/45931351,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+openai-breadth,condefects/abc342_b/54862037,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc244_b/45713633,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc354_a/54993286,0,plausible_incorrect,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc351_b/54891565,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc229_a/44625287,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+openai-breadth,condefects/abc243_b/44827583,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc285_a/45976942,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+openai-breadth,condefects/abc277_a/45114990,0,plausible_incorrect,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc247_b/45068335,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc314_b/45979954,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc238_b/45497591,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc234_a/44890153,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+openai-breadth,condefects/abc248_c/45110543,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc346_e/52762677,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc355_d/54962724,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc349_d/54267102,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc258_c/44704874,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+openai-breadth,condefects/abc337_d/54308671,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc261_d/46044177,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc230_e/45074707,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc334_e/52777689,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc325_f/47205844,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc354_f/54039651,0,failing,"FM-1.3, FM-1.1",An identical candidate was sent back to failing visible tests. The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc283_g/50031003,0,plausible_incorrect,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc224_d/44885115,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc263_e/44902374,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+openai-breadth,condefects/abc241_e/45018675,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai-breadth,condefects/abc293_e/46204765,0,failing,FM-1.1,The final candidate violates the required entry-point signature.
+openai,quixbugs/max_sublist_sum,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+openai,quixbugs/max_sublist_sum/renamed,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+openai,condefects/abc223_a/45813374,0,plausible_incorrect,unresolved,Available trace signals do not isolate a MAST mode.
+openai,condefects/abc223_a/45813374/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+orca,condefects/abc223_a/45813374,0,plausible_incorrect,FM-3.3,The final approval conflicts with a reserved test.
+qwen,quixbugs/max_sublist_sum/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+qwen,condefects/abc223_a/45813374,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+qwen,condefects/abc223_a/45813374/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+qwen,condefects/abc225_a/44428733,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+qwen,condefects/abc225_a/44428733/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,quixbugs/gcd/renamed,0,failing,unresolved,Available trace signals do not isolate a MAST mode.
+smollm2,quixbugs/max_sublist_sum/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc223_a/45813374,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc223_a/45813374/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc223_b/53513467,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc223_b/53513467/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc225_a/44428733,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.
+smollm2,condefects/abc225_a/44428733/renamed,0,failing,FM-1.3,An identical candidate was sent back to failing visible tests.

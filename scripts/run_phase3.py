@@ -1,4 +1,5 @@
 """Run one fixed, resumable model panel. Hosted credentials are read only for the chosen profile."""
+
 import argparse
 import getpass
 import hashlib
@@ -18,7 +19,7 @@ from bugfix import SYSTEMS, Budget, evaluate, load_bugs
 from bugfix.llm import OpenAICompatibleLLM
 from run_experiment import git_commit
 
-# Model aliases for llama-server --alias. The two endpoints only bind to loopback.
+# The local llama-server profiles use pinned aliases and bind to loopback.
 PROFILES = {
     "qwen": ("qwen2.5-coder-1.5b-instruct-q4_k_m", "http://127.0.0.1:18181/v1", None),
     "smollm2": ("smollm2-1.7b-instruct-q4_k_m", "http://127.0.0.1:18182/v1", None),
@@ -54,9 +55,15 @@ def main():
 def run_cohort(args, out):
     model, base, var = PROFILES[args.profile]
     data = DATA if args.cohort == "panel" else ROOT / "data/condefects/bugs.jsonl"
-    meta = dict(model=model, profile=args.profile, data_sha256=hashlib.sha256(data.read_bytes()).hexdigest(),
-                temperature=TEMPERATURE, max_calls=MAX_CALLS, max_output_tokens=MAX_TOKENS,
-                per_call_max_tokens=PER_CALL)
+    meta = dict(
+        model=model,
+        profile=args.profile,
+        data_sha256=hashlib.sha256(data.read_bytes()).hexdigest(),
+        temperature=TEMPERATURE,
+        max_calls=MAX_CALLS,
+        max_output_tokens=MAX_TOKENS,
+        per_call_max_tokens=PER_CALL,
+    )
     jobs = {(b.id, s, 0): b for b in load_bugs(data) for s in SYSTEMS}
     if out.exists():
         for line in out.read_text(encoding="utf-8").splitlines():
@@ -70,15 +77,25 @@ def run_cohort(args, out):
         return
     secret = (os.getenv(var) or getpass.getpass(var + ": ")) if var else "local"
     free_route = args.profile == "orca"
-    llm = OpenAICompatibleLLM(model=model, base_url=base, api_key=secret, temperature=TEMPERATURE,
-                              per_call_max_tokens=PER_CALL, retries=4 if free_route else 1,
-                              rpm=6 if free_route else 0, max_prompt_bytes=16384)
+    llm = OpenAICompatibleLLM(
+        model=model,
+        base_url=base,
+        api_key=secret,
+        temperature=TEMPERATURE,
+        per_call_max_tokens=PER_CALL,
+        retries=4 if free_route else 1,
+        rpm=6 if free_route else 0,
+        max_prompt_bytes=16384,
+    )
     # Validate the free route against the live catalog before sending any prompts.
     if args.profile == "orca":
         catalog = {m.id: m for m in llm.client.models.list()}
         price = getattr(catalog.get(model), "pricing", {}) or {}
-        if not price or not ("request" in price or {"prompt", "completion"} <= price.keys()) or any(
-                float(v) != 0 for v in price.values()):
+        if (
+            not price
+            or not ("request" in price or {"prompt", "completion"} <= price.keys())
+            or any(float(v) != 0 for v in price.values())
+        ):
             raise ValueError("The selected route does not advertise zero prices.")
     if not var:
         available = {m.id for m in llm.client.models.list()}
@@ -92,17 +109,29 @@ def run_cohort(args, out):
         t0 = time.monotonic()
         budget = Budget(MAX_CALLS, MAX_TOKENS)
         result = SYSTEMS[system](bug, llm, budget)
-        return dict(**meta, bug_id=bug_id, system=system, run=repetition, commit=commit,
-                    timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    wall_s=round(time.monotonic() - t0, 2), stop_reason=result.stop_reason,
-                    passed_visible=result.passed_visible, reviewer_approved=result.reviewer_approved,
-                    usage=result.usage, call_usage=budget.log, **evaluate(bug, result), final_code=result.final_code,
-                    trace=result.trace)
+        return dict(
+            **meta,
+            bug_id=bug_id,
+            system=system,
+            run=repetition,
+            commit=commit,
+            timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            wall_s=round(time.monotonic() - t0, 2),
+            stop_reason=result.stop_reason,
+            passed_visible=result.passed_visible,
+            reviewer_approved=result.reviewer_approved,
+            usage=result.usage,
+            call_usage=budget.log,
+            **evaluate(bug, result),
+            final_code=result.final_code,
+            trace=result.trace,
+        )
 
     out.parent.mkdir(parents=True, exist_ok=True)
     # Consume small batches so an unavailable provider stops the run promptly.
     keys = iter(jobs)
     from itertools import islice
+
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         while batch := list(islice(keys, args.workers)):
             futures = [pool.submit(run, key) for key in batch]
@@ -115,9 +144,15 @@ def run_cohort(args, out):
                     cause = exc.__cause__ or exc
                     status = getattr(cause, "status_code", None)
                     message = f"{key}: {type(cause).__name__} (HTTP {status or '?'})"
+                    if status == 402:
+                        body = getattr(cause, "body", None)
+                        if isinstance(body, dict):
+                            detail = body.get("error", body)
+                            if isinstance(detail, dict):
+                                message += " " + str(detail.get("message", "")).replace(secret, "[redacted]")[:350]
                     if status == 429:
                         headers = cause.response.headers
-                        message += f"; retry-after={headers.get('retry-after','unspecified')}"
+                        message += f"; retry-after={headers.get('retry-after', 'unspecified')}"
                     errors.append(message)
                     continue
                 with out.open("a", encoding="utf-8") as stream:

@@ -1,0 +1,8 @@
+profile,approved_correct,approved_wrong,rejected_correct,rejected_wrong,unreviewed_final
+archive-gemini,81,2,1,0,9
+deepseek-coder,2,0,0,0,10
+openai,8,2,0,1,1
+openai-breadth,39,2,6,1,52
+orca,6,1,0,0,0
+qwen,0,0,1,0,11
+smollm2,0,0,1,0,11
