@@ -14,6 +14,8 @@ from pathlib import Path
 from run_phase3 import PROFILES, ROOT
 
 WEIGHTS = {
+    "deepseek-coder": ("deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
+                        "04cebb6fafa40ae628cf6bfeb76032ec792852f54020c559ad0a56b9f2839118"),
     "qwen": ("qwen2.5-coder-1.5b-instruct-q4_k_m.gguf",
              "cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046"),
     "smollm2": ("smollm2-1.7b-instruct-q4_k_m.gguf",

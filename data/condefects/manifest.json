@@ -1,0 +1,426 @@
+{
+  "commit": "43f0834a82c5e3bc4516c079fe7765f63b1a15cd",
+  "seed": 403,
+  "bands": [
+    [
+      0,
+      399,
+      60
+    ],
+    [
+      400,
+      1199,
+      30
+    ],
+    [
+      1200,
+      100000,
+      10
+    ]
+  ],
+  "sha256": "e3afeabcda12e719acd1aca5fbae9929e958988d1357b0daba0cc6945d3e41ef",
+  "sample": "One submission per task, eligible reference passes all examples, faulty submission fails a visible example.",
+  "source": "ConDefects CC BY-SA 4.0, adapted to callable functions. Public AtCoder sample I/O; source URLs in each row.",
+  "tasks": [
+    {
+      "bug": "condefects/abc233_a/45723931",
+      "difficulty": 9
+    },
+    {
+      "bug": "condefects/abc310_b/45545558",
+      "difficulty": 226
+    },
+    {
+      "bug": "condefects/abc335_b/54952141",
+      "difficulty": 52
+    },
+    {
+      "bug": "condefects/abc359_b/55042277",
+      "difficulty": 27
+    },
+    {
+      "bug": "condefects/abc318_b/54678489",
+      "difficulty": 101
+    },
+    {
+      "bug": "condefects/abc235_b/45931351",
+      "difficulty": 20
+    },
+    {
+      "bug": "condefects/abc342_b/54862037",
+      "difficulty": 57
+    },
+    {
+      "bug": "condefects/abc289_a/45965844",
+      "difficulty": 14
+    },
+    {
+      "bug": "condefects/abc280_b/45270301",
+      "difficulty": 22
+    },
+    {
+      "bug": "condefects/abc337_a/54867325",
+      "difficulty": 15
+    },
+    {
+      "bug": "condefects/abc244_b/45713633",
+      "difficulty": 30
+    },
+    {
+      "bug": "condefects/abc354_a/54993286",
+      "difficulty": 21
+    },
+    {
+      "bug": "condefects/abc224_b/45096470",
+      "difficulty": 81
+    },
+    {
+      "bug": "condefects/abc283_a/44656811",
+      "difficulty": 8
+    },
+    {
+      "bug": "condefects/abc330_b/54214263",
+      "difficulty": 118
+    },
+    {
+      "bug": "condefects/abc351_b/54891565",
+      "difficulty": 34
+    },
+    {
+      "bug": "condefects/abc357_c/55043182",
+      "difficulty": 371
+    },
+    {
+      "bug": "condefects/abc249_a/45229228",
+      "difficulty": 103
+    },
+    {
+      "bug": "condefects/abc229_a/44625287",
+      "difficulty": 24
+    },
+    {
+      "bug": "condefects/abc229_b/45280624",
+      "difficulty": 42
+    },
+    {
+      "bug": "condefects/abc341_a/54737422",
+      "difficulty": 11
+    },
+    {
+      "bug": "condefects/abc279_b/44853654",
+      "difficulty": 39
+    },
+    {
+      "bug": "condefects/abc272_a/54282225",
+      "difficulty": 8
+    },
+    {
+      "bug": "condefects/abc331_a/54744974",
+      "difficulty": 25
+    },
+    {
+      "bug": "condefects/abc324_b/54903435",
+      "difficulty": 91
+    },
+    {
+      "bug": "condefects/abc341_b/54459998",
+      "difficulty": 163
+    },
+    {
+      "bug": "condefects/abc277_b/45992139",
+      "difficulty": 60
+    },
+    {
+      "bug": "condefects/abc305_a/45785540",
+      "difficulty": 10
+    },
+    {
+      "bug": "condefects/abc225_c/45469943",
+      "difficulty": 326
+    },
+    {
+      "bug": "condefects/abc348_a/54752579",
+      "difficulty": 10
+    },
+    {
+      "bug": "condefects/abc243_b/44827583",
+      "difficulty": 26
+    },
+    {
+      "bug": "condefects/abc331_c/54472770",
+      "difficulty": 288
+    },
+    {
+      "bug": "condefects/abc360_d/55158034",
+      "difficulty": 159
+    },
+    {
+      "bug": "condefects/abc327_c/54292566",
+      "difficulty": 169
+    },
+    {
+      "bug": "condefects/abc291_a/45508180",
+      "difficulty": 8
+    },
+    {
+      "bug": "condefects/abc285_a/45976942",
+      "difficulty": 11
+    },
+    {
+      "bug": "condefects/abc358_b/55111511",
+      "difficulty": 43
+    },
+    {
+      "bug": "condefects/abc267_b/45974485",
+      "difficulty": 171
+    },
+    {
+      "bug": "condefects/abc339_c/54482593",
+      "difficulty": 174
+    },
+    {
+      "bug": "condefects/abc329_c/54527271",
+      "difficulty": 205
+    },
+    {
+      "bug": "condefects/abc242_b/45803292",
+      "difficulty": 45
+    },
+    {
+      "bug": "condefects/abc355_a/55137190",
+      "difficulty": 12
+    },
+    {
+      "bug": "condefects/abc277_a/45114990",
+      "difficulty": 11
+    },
+    {
+      "bug": "condefects/abc347_a/54752692",
+      "difficulty": 11
+    },
+    {
+      "bug": "condefects/abc247_b/45068335",
+      "difficulty": 202
+    },
+    {
+      "bug": "condefects/abc323_c/54680187",
+      "difficulty": 357
+    },
+    {
+      "bug": "condefects/abc281_b/45944008",
+      "difficulty": 66
+    },
+    {
+      "bug": "condefects/abc303_a/46127283",
+      "difficulty": 22
+    },
+    {
+      "bug": "condefects/abc314_b/45979954",
+      "difficulty": 135
+    },
+    {
+      "bug": "condefects/abc238_a/44611745",
+      "difficulty": 26
+    },
+    {
+      "bug": "condefects/abc348_b/54985226",
+      "difficulty": 79
+    },
+    {
+      "bug": "condefects/abc312_a/45893891",
+      "difficulty": 12
+    },
+    {
+      "bug": "condefects/abc240_a/45813906",
+      "difficulty": 7
+    },
+    {
+      "bug": "condefects/abc323_b/54226184",
+      "difficulty": 75
+    },
+    {
+      "bug": "condefects/abc335_a/54743914",
+      "difficulty": 9
+    },
+    {
+      "bug": "condefects/abc327_a/54966208",
+      "difficulty": 23
+    },
+    {
+      "bug": "condefects/abc238_b/45497591",
+      "difficulty": 183
+    },
+    {
+      "bug": "condefects/abc287_a/45997889",
+      "difficulty": 11
+    },
+    {
+      "bug": "condefects/abc314_a/46017209",
+      "difficulty": 30
+    },
+    {
+      "bug": "condefects/abc234_a/44890153",
+      "difficulty": 7
+    },
+    {
+      "bug": "condefects/abc292_c/45536157",
+      "difficulty": 444
+    },
+    {
+      "bug": "condefects/abc248_c/45110543",
+      "difficulty": 787
+    },
+    {
+      "bug": "condefects/abc312_c/45814496",
+      "difficulty": 727
+    },
+    {
+      "bug": "condefects/abc301_d/45732372",
+      "difficulty": 885
+    },
+    {
+      "bug": "condefects/abc243_c/45332491",
+      "difficulty": 409
+    },
+    {
+      "bug": "condefects/abc346_e/52762677",
+      "difficulty": 1053
+    },
+    {
+      "bug": "condefects/abc226_c/45527659",
+      "difficulty": 539
+    },
+    {
+      "bug": "condefects/abc294_e/51921412",
+      "difficulty": 792
+    },
+    {
+      "bug": "condefects/abc309_d/46051654",
+      "difficulty": 621
+    },
+    {
+      "bug": "condefects/abc270_c/54301518",
+      "difficulty": 625
+    },
+    {
+      "bug": "condefects/abc355_d/54962724",
+      "difficulty": 735
+    },
+    {
+      "bug": "condefects/abc256_d/44868880",
+      "difficulty": 546
+    },
+    {
+      "bug": "condefects/abc349_d/54267102",
+      "difficulty": 832
+    },
+    {
+      "bug": "condefects/abc359_c/55129367",
+      "difficulty": 828
+    },
+    {
+      "bug": "condefects/abc296_d/45799143",
+      "difficulty": 999
+    },
+    {
+      "bug": "condefects/abc356_d/55026737",
+      "difficulty": 886
+    },
+    {
+      "bug": "condefects/abc286_d/45059364",
+      "difficulty": 607
+    },
+    {
+      "bug": "condefects/abc258_c/44704874",
+      "difficulty": 419
+    },
+    {
+      "bug": "condefects/abc249_c/45110623",
+      "difficulty": 528
+    },
+    {
+      "bug": "condefects/abc283_d/45462979",
+      "difficulty": 453
+    },
+    {
+      "bug": "condefects/abc337_d/54308671",
+      "difficulty": 760
+    },
+    {
+      "bug": "condefects/abc303_c/45578518",
+      "difficulty": 417
+    },
+    {
+      "bug": "condefects/abc261_d/46044177",
+      "difficulty": 801
+    },
+    {
+      "bug": "condefects/abc230_e/45074707",
+      "difficulty": 969
+    },
+    {
+      "bug": "condefects/abc334_e/52777689",
+      "difficulty": 1195
+    },
+    {
+      "bug": "condefects/abc334_b/54939914",
+      "difficulty": 479
+    },
+    {
+      "bug": "condefects/abc240_d/45435904",
+      "difficulty": 570
+    },
+    {
+      "bug": "condefects/abc232_d/45499422",
+      "difficulty": 539
+    },
+    {
+      "bug": "condefects/abc254_d/53475713",
+      "difficulty": 1191
+    },
+    {
+      "bug": "condefects/abc318_c/45939362",
+      "difficulty": 400
+    },
+    {
+      "bug": "condefects/abc325_f/47205844",
+      "difficulty": 1769
+    },
+    {
+      "bug": "condefects/abc350_f/54219104",
+      "difficulty": 1601
+    },
+    {
+      "bug": "condefects/abc236_g/28766467",
+      "difficulty": 2438
+    },
+    {
+      "bug": "condefects/abc354_f/54039651",
+      "difficulty": 1639
+    },
+    {
+      "bug": "condefects/abc283_g/50031003",
+      "difficulty": 2173
+    },
+    {
+      "bug": "condefects/abc269_g/43509672",
+      "difficulty": 2440
+    },
+    {
+      "bug": "condefects/abc224_d/44885115",
+      "difficulty": 1376
+    },
+    {
+      "bug": "condefects/abc263_e/44902374",
+      "difficulty": 1659
+    },
+    {
+      "bug": "condefects/abc241_e/45018675",
+      "difficulty": 1248
+    },
+    {
+      "bug": "condefects/abc293_e/46204765",
+      "difficulty": 1453
+    }
+  ]
+}

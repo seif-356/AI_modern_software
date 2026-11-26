@@ -44,7 +44,7 @@ class Budget:
         return self.max_output_tokens - self.output_tokens
 
     def check(self) -> None:
-        if self.remaining_calls <= 0 or self.remaining_tokens <= 0:
+        if self.remaining_calls <= 0 or self.remaining_tokens <= 0 or any(e.get("limit_exceeded") for e in self.log):
             raise BudgetExceeded(
                 f"calls {self.calls}/{self.max_calls}, "
                 f"output tokens {self.output_tokens}/{self.max_output_tokens}"
@@ -68,6 +68,7 @@ class Budget:
             "latency_s": round(self.latency_s, 3),
             "max_calls": self.max_calls,
             "max_output_tokens": self.max_output_tokens,
+            "provider_limit_violations": sum(entry.get("limit_exceeded", False) for entry in self.log),
         }
 
 
@@ -168,6 +169,11 @@ class OpenAICompatibleLLM:
             p = getattr(usage, "prompt_tokens", None) or _estimate_tokens(str(messages))
             o = getattr(usage, "completion_tokens", None) or _estimate_tokens(text)
             budget.charge(role, p, o, time.time() - t0)
+            if usage is not None and o > max_tokens:
+                budget.log[-1]["limit_exceeded"] = True
+                # The provider has already consumed these tokens. Preserve measured
+                # usage and prevent further calls or use of the over-limit reply.
+                raise BudgetExceeded(f"Provider reported {o} tokens for a {max_tokens}-token request")
             return text
         raise RuntimeError(f"LLM call failed after {self.retries} attempts") from last_err
 

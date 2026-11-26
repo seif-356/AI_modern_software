@@ -5,10 +5,12 @@ import hashlib
 import json
 import os
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
+from filelock import FileLock, Timeout
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -20,6 +22,7 @@ from run_experiment import git_commit
 PROFILES = {
     "qwen": ("qwen2.5-coder-1.5b-instruct-q4_k_m", "http://127.0.0.1:18181/v1", None),
     "smollm2": ("smollm2-1.7b-instruct-q4_k_m", "http://127.0.0.1:18182/v1", None),
+    "deepseek-coder": ("deepseek-coder-1.3b-instruct-q4_k_m", "http://127.0.0.1:18183/v1", None),
     "openai": ("gpt-5.4-nano-2026-03-17", "https://api.openai.com/v1", "OPENAI_API_KEY"),
     "orca": ("deepseek/deepseek-v4-flash-free", "https://api.orcarouter.ai/v1", "ORCAROUTER_API_KEY"),
     "deepseek": ("deepseek-flash", "https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
@@ -37,10 +40,20 @@ def main():
     arg.add_argument("--cohort", choices=["panel", "breadth"], default="panel")
     arg.add_argument("--dry-run", action="store_true")
     args = arg.parse_args()
-    model, base, var = PROFILES[args.profile]
-    data = DATA if args.cohort == "panel" else ROOT / "data/condefects/bugs.jsonl"
     name = args.profile if args.cohort == "panel" else args.profile + "-breadth"
     out = ROOT / "results/phase3/raw" / (name + ".jsonl")
+    identity = hashlib.sha256(os.path.normcase(str(out)).encode()).hexdigest()[:24]
+    lock = Path(tempfile.gettempdir()) / f"sw403-{identity}.lock"
+    try:
+        with FileLock(lock, timeout=0):
+            run_cohort(args, out)
+    except Timeout:
+        arg.exit(1, f"Another process is already running {name}.\n")
+
+
+def run_cohort(args, out):
+    model, base, var = PROFILES[args.profile]
+    data = DATA if args.cohort == "panel" else ROOT / "data/condefects/bugs.jsonl"
     meta = dict(model=model, profile=args.profile, data_sha256=hashlib.sha256(data.read_bytes()).hexdigest(),
                 temperature=TEMPERATURE, max_calls=MAX_CALLS, max_output_tokens=MAX_TOKENS,
                 per_call_max_tokens=PER_CALL)
@@ -83,7 +96,7 @@ def main():
                     timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     wall_s=round(time.monotonic() - t0, 2), stop_reason=result.stop_reason,
                     passed_visible=result.passed_visible, reviewer_approved=result.reviewer_approved,
-                    usage=result.usage, **evaluate(bug, result), final_code=result.final_code,
+                    usage=result.usage, call_usage=budget.log, **evaluate(bug, result), final_code=result.final_code,
                     trace=result.trace)
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -100,7 +113,12 @@ def main():
                 except Exception as exc:
                     # Provider bodies can echo auth details. Only expose the class and status.
                     cause = exc.__cause__ or exc
-                    errors.append(f"{key}: {type(cause).__name__} (HTTP {getattr(cause, 'status_code', '?')})")
+                    status = getattr(cause, "status_code", None)
+                    message = f"{key}: {type(cause).__name__} (HTTP {status or '?'})"
+                    if status == 429:
+                        headers = cause.response.headers
+                        message += f"; retry-after={headers.get('retry-after','unspecified')}"
+                    errors.append(message)
                     continue
                 with out.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(row) + "\n")

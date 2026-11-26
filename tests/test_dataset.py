@@ -15,5 +15,8 @@ BUGS = load_bugs(DATA) if DATA.exists() else []
 @pytest.mark.parametrize("bug", BUGS, ids=[b.func_name for b in BUGS])
 def test_reference_correct_and_buggy_fails(bug):
     assert bug.visible_tests and bug.heldout_tests
-    assert evaluate(bug, RepairResult("ref", bug.reference_code, True, "x"))["label"] == "correct"
+    # This checks the supplied reference's outputs. The exponential Levenshtein
+    # reference can take several seconds on a busy host during dataset validation.
+    ref = evaluate(bug, RepairResult("ref", bug.reference_code, True, "x"), per_test_timeout=15)
+    assert ref["label"] == "correct"
     assert evaluate(bug, RepairResult("buggy", bug.buggy_code, False, "x"))["label"] == "failing"

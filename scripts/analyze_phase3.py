@@ -65,7 +65,8 @@ def main():
         datasets.append(breadth)
     bugs = {r["id"]: r for path in datasets for r in records(path)}
     groups, systems, variants = defaultdict(list), defaultdict(lambda: defaultdict(dict)), defaultdict(lambda: defaultdict(dict))
-    sample_pool, inventory, seen = [], [], set()
+    sample_pool, inventory, seen, audit = [], [], set(), []
+    reviewers = defaultdict(Counter)
     for path in [ARCHIVE, *sorted((OUT / "raw").glob("*.jsonl"))]:
         raw = records(path)
         profile = "archive-gemini" if path == ARCHIVE else path.stem
@@ -76,6 +77,13 @@ def main():
                               output_tokens=sum(r["usage"]["output_tokens"] for r in raw)))
         for r in raw:
             bug, system, run = r["bug_id"], r["system"], r["run"]
+            usage = r["usage"]
+            cap = min(r["max_output_tokens"], usage["calls"] * r.get("per_call_max_tokens", 1500))
+            violation = (usage["output_tokens"] > cap or usage["calls"] > r["max_calls"]
+                         or usage.get("provider_limit_violations", 0) > 0)
+            audit.append(dict(profile=profile, bug=bug, system=system, run=run, calls=usage["calls"],
+                              output_tokens=usage["output_tokens"], max_for_completed_calls=cap,
+                              known_violation=violation, equal_budget_comparison=profile != "orca" and not violation))
             sid = json.dumps([profile, bug, system, run])
             if sid in seen:
                 raise ValueError(f"Duplicate attempt {sid}")
@@ -83,12 +91,25 @@ def main():
             source = bug.split("/")[0]
             variant = "renamed" if bug.endswith("/renamed") else "original"
             groups[profile, source, variant, system].append(r)
+            if system == "s2":
+                verdict = r["reviewer_approved"]
+                if verdict is None or not r["passed_visible"]:
+                    reviewers[profile]["unreviewed_final"] += 1
+                else:
+                    side = "approved" if verdict else "rejected"
+                    outcome = "correct" if r["label"] == "correct" else "wrong"
+                    reviewers[profile][f"{side}_{outcome}"] += 1
             ok = r["label"] == "correct"
-            systems[profile, source, variant][bug, run][system] = ok
-            variants[profile, source, system][bug.removesuffix("/renamed"), run][variant] = ok
+            if profile != "orca" and not violation:
+                systems[profile, source, variant][bug, run][system] = ok
+                variants[profile, source, system][bug.removesuffix("/renamed"), run][variant] = ok
             if r["label"] in ("correct", "plausible_incorrect"):
                 sample_pool.append((sid, r))
     save(OUT/"inventory.csv", inventory)
+    save(OUT/"budget_audit.csv", audit)
+    categories = ["approved_correct", "approved_wrong", "rejected_correct", "rejected_wrong", "unreviewed_final"]
+    save(OUT/"reviewers.csv", [dict(profile=m, **{k: counts[k] for k in categories})
+                               for m, counts in sorted(reviewers.items())])
     summary = []
     for (profile, dataset, variant, system), rows in sorted(groups.items()):
         labels = Counter(r["label"] for r in rows)
@@ -111,7 +132,11 @@ def main():
     for sid, r in chosen:
         anonymous = hashlib.sha256(("sw403-review-"+sid).encode()).hexdigest()[:14]
         bug = bugs[r["bug_id"]]
-        packet.append(dict(sample_id=anonymous, original=bug["buggy_code"], reference=bug["reference_code"],
+        case_id = r["bug_id"].removesuffix("/renamed").split("/")
+        task_url = (f"https://atcoder.jp/contests/{case_id[1].split('_')[0]}/tasks/{case_id[1]}?lang=en"
+                    if case_id[0] == "condefects" else
+                    f"https://github.com/jkoppel/QuixBugs/blob/4257f44/python_programs/{case_id[1]}.py")
+        packet.append(dict(sample_id=anonymous, specification=task_url, original=bug["buggy_code"], reference=bug["reference_code"],
                            patch=r["final_code"], label="", rationale=""))
         key.append(dict(sample_id=anonymous, attempt=json.loads(sid)))
     save(OUT/"review_packet.csv", packet)

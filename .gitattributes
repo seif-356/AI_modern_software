@@ -1,0 +1,3 @@
+data/phase3/*.jsonl text eol=lf
+data/condefects/*.jsonl text eol=lf
+results/phase3/raw/*.jsonl text eol=lf

@@ -24,6 +24,9 @@ if not raw_files:
 raw_path = st.sidebar.selectbox("Results file", raw_files, format_func=lambda p: str(p.relative_to(ROOT / "results")))
 df = load(raw_path)
 records = [json.loads(l) for l in raw_path.read_text().splitlines() if l.strip()]
+if raw_path.stem == "orca":
+    st.info(f"Diagnostic run with {len(records)} attempts. The free gateway reported token-limit overruns. "
+            "Its results are excluded from equal-budget paired comparisons.")
 st.sidebar.write(f"Model: `{df.model.iloc[0]}`")
 st.sidebar.write(f"Budget: {df.max_calls.iloc[0]} calls / {df.max_output_tokens.iloc[0]} output tokens")
 st.sidebar.write(f"{df.bug_id.nunique()} bugs, {len(df)} attempts")
@@ -49,12 +52,18 @@ st.subheader("Hallucination flags (share of attempts)")
 st.bar_chart(df.groupby("system")[FLAGS].mean().rename(index=NAMES))
 
 summary_dir = raw_path.parent.parent
-if raw_path.parent.parent.name == "phase3":
-    summary_dir = summary_dir / "by_model" / raw_path.stem
-for name, title in [("mcnemar.csv", "McNemar tests"), ("reviewer.csv", "Reviewer agent (S2)")]:
+is_phase3 = summary_dir.name == "phase3"
+tables = ([("system_pairs.csv", "Paired system comparisons"), ("renaming_pairs.csv", "Paired renaming probe"),
+           ("reviewers.csv", "Reviewer agent (S2)")] if is_phase3 else
+          [("mcnemar.csv", "McNemar tests"), ("reviewer.csv", "Reviewer agent (S2)")])
+for name, title in tables:
     if (summary_dir / name).exists():
-        st.subheader(title)
-        st.dataframe(pd.read_csv(summary_dir / name), use_container_width=True)
+        table = pd.read_csv(summary_dir / name)
+        if is_phase3:
+            table = table[table.profile == raw_path.stem].drop(columns="profile")
+        if not table.empty:
+            st.subheader(title)
+            st.dataframe(table, use_container_width=True)
 
 st.subheader("Per bug: correct runs")
 st.dataframe(df.pivot_table(index="bug_id", columns="system", values="correct", aggfunc="sum"),

@@ -1,4 +1,3 @@
-import csv
 import hashlib
 import json
 import sys
@@ -10,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"scripts"))
 from analyze_phase3 import agree, pairs
 from prepare_phase3 import expected, renamed
-from bugfix.bugs import load_bugs, toy_bug
+from bugfix.bugs import load_bugs
 from bugfix.sandbox import run_tests
 
 
@@ -50,6 +49,23 @@ def test_candidate_does_not_inherit_provider_environment(monkeypatch):
 def test_pairing_excludes_missing_attempts():
     counts=pairs({1:{"s1":True,"s2":False},2:{"s1":False},3:{"s1":True,"s2":True}},"s1","s2")
     assert (counts["n_pairs"],counts["left_only"],counts["right_only"])==(2,1,0)
+
+
+def test_over_limit_completion_is_charged_and_stops_the_attempt(monkeypatch):
+    from types import SimpleNamespace
+    from bugfix.llm import Budget, BudgetExceeded, OpenAICompatibleLLM
+    client = OpenAICompatibleLLM(model="local", base_url="http://127.0.0.1:1/v1",
+                                 api_key="local", per_call_max_tokens=10)
+    reply = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="answer"))],
+                            usage=SimpleNamespace(completion_tokens=15, prompt_tokens=5))
+    monkeypatch.setattr(client.client.chat.completions, "create", lambda **kwargs: reply)
+    budget = Budget(4, 100)
+    with pytest.raises(BudgetExceeded):
+        client.chat([], budget, "fixer")
+    assert budget.output_tokens == 15
+    assert budget.usage()["provider_limit_violations"] == 1
+    with pytest.raises(BudgetExceeded):
+        budget.check()
 
 
 def test_kappa_requires_two_complete_rating_files(tmp_path):

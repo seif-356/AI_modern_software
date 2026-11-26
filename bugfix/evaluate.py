@@ -16,10 +16,10 @@ API_ERRORS = {"NameError", "AttributeError", "ImportError", "ModuleNotFoundError
 STDLIB = set(getattr(sys, "stdlib_module_names", ()))
 
 
-def evaluate(bug: Bug, result: RepairResult) -> dict:
+def evaluate(bug: Bug, result: RepairResult, *, per_test_timeout: float = 2.0) -> dict:
     code = result.final_code
-    vis = run_tests(code, bug.func_name, bug.visible_tests, bug.support_files)
-    held = run_tests(code, bug.func_name, bug.heldout_tests, bug.support_files)
+    vis = run_tests(code, bug.func_name, bug.visible_tests, bug.support_files, per_test_timeout)
+    held = run_tests(code, bug.func_name, bug.heldout_tests, bug.support_files, per_test_timeout)
 
     held_ok = held.all_passed if bug.heldout_tests else vis.all_passed
     if vis.all_passed and held_ok:
