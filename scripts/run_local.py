@@ -35,6 +35,8 @@ def main():
     ap.add_argument("--profile", choices=WEIGHTS, required=True)
     ap.add_argument("--server", default="llama-server")
     ap.add_argument("--weights", type=Path, required=True, help="directory containing the pinned GGUF")
+    ap.add_argument("--cohort", nargs="+", choices=["panel", "breadth", "full-quixbugs", "full-condefects"],
+                    default=["panel"])
     args = ap.parse_args()
     filename, digest = WEIGHTS[args.profile]
     path = args.weights / filename
@@ -80,19 +82,12 @@ def main():
                 time.sleep(1)
             else:
                 raise RuntimeError("Local model did not become ready")
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-u",
-                    str(ROOT / "scripts/run_phase3.py"),
-                    "--profile",
-                    args.profile,
-                    "--workers",
-                    "2",
-                ],
-                check=True,
-                cwd=ROOT,
-            )
+            for cohort in args.cohort:
+                subprocess.run(
+                    [sys.executable, "-u", str(ROOT / "scripts/run_phase3.py"),
+                     "--profile", args.profile, "--workers", "2", "--cohort", cohort],
+                    check=True, cwd=ROOT,
+                )
         finally:
             server.terminate()
             try:

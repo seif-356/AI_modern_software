@@ -32,17 +32,24 @@ PROFILES = {
 MAX_CALLS, MAX_TOKENS, PER_CALL = 4, 1536, 512
 TEMPERATURE = 0.2
 DATA = ROOT / "data/phase3/bugs.jsonl"
+COHORT_DATA = {
+    "panel": DATA,
+    "breadth": ROOT / "data/condefects/bugs.jsonl",
+    "full-quixbugs": ROOT / "data/quixbugs/bugs.jsonl",
+    "full-condefects": ROOT / "data/condefects/bugs.jsonl",
+}
 
 
 def main():
     arg = argparse.ArgumentParser(description=__doc__)
     arg.add_argument("--profile", required=True, choices=PROFILES)
     arg.add_argument("--workers", type=int, default=1, choices=range(1, 5))
-    arg.add_argument("--cohort", choices=["panel", "breadth"], default="panel")
+    arg.add_argument("--cohort", choices=COHORT_DATA, default="panel")
     arg.add_argument("--dry-run", action="store_true")
     args = arg.parse_args()
-    name = args.profile if args.cohort == "panel" else args.profile + "-breadth"
-    out = ROOT / "results/phase3/raw" / (name + ".jsonl")
+    name = args.profile if args.cohort == "panel" else args.profile + "-" + args.cohort
+    directory = "full-models" if args.cohort.startswith("full-") else "raw"
+    out = ROOT / "results/phase3" / directory / (name + ".jsonl")
     identity = hashlib.sha256(os.path.normcase(str(out)).encode()).hexdigest()[:24]
     lock = Path(tempfile.gettempdir()) / f"sw403-{identity}.lock"
     try:
@@ -54,7 +61,7 @@ def main():
 
 def run_cohort(args, out):
     model, base, var = PROFILES[args.profile]
-    data = DATA if args.cohort == "panel" else ROOT / "data/condefects/bugs.jsonl"
+    data = COHORT_DATA[args.cohort]
     meta = dict(
         model=model,
         profile=args.profile,
@@ -65,11 +72,33 @@ def run_cohort(args, out):
         per_call_max_tokens=PER_CALL,
     )
     jobs = {(b.id, s, 0): b for b in load_bugs(data) for s in SYSTEMS}
+    if args.cohort.startswith("full-"):
+        for suffix, original_data in [("", DATA), ("-breadth", ROOT / "data/condefects/bugs.jsonl")]:
+            source = ROOT / "results/phase3/raw" / (args.profile + suffix + ".jsonl")
+            if not source.exists():
+                continue
+            source_bugs = {b.id: b for b in load_bugs(original_data)}
+            expected = dict(meta, data_sha256=hashlib.sha256(original_data.read_bytes()).hexdigest())
+            for line in source.read_text(encoding="utf-8").splitlines():
+                row = json.loads(line)
+                key = row["bug_id"], row["system"], row["run"]
+                if key in jobs and source_bugs.get(key[0]) == jobs[key]:
+                    if any(row.get(k) != v for k, v in expected.items()):
+                        raise ValueError(f"Incompatible source record in {source.name}: {key}")
+                    del jobs[key]
     if out.exists():
+        valid_hashes = {meta["data_sha256"]}
+        if args.cohort == "full-quixbugs":
+            # Git auto-converts this archived file on Windows. Preserve each
+            # row's measured byte hash and accept either checkout line ending.
+            lf = data.read_bytes().replace(b"\r\n", b"\n")
+            valid_hashes.update(hashlib.sha256(b).hexdigest() for b in (lf, lf.replace(b"\n", b"\r\n")))
         for line in out.read_text(encoding="utf-8").splitlines():
             r = json.loads(line)
             key = r["bug_id"], r["system"], r["run"]
-            if any(r.get(k) != v for k, v in meta.items()) or key not in jobs:
+            compatible = r.get("data_sha256") in valid_hashes and all(
+                r.get(k) == v for k, v in meta.items() if k != "data_sha256")
+            if not compatible or key not in jobs:
                 raise ValueError(f"Incompatible or duplicate record in {out.name}: {key}")
             del jobs[key]
     print(f"{args.profile}: {len(jobs)} attempts remaining", flush=True)
