@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -53,34 +54,45 @@ def run_tests(code: str, func_name: str, tests: list[dict], support_files: dict[
     try:
         cand = work / "cand"
         cand.mkdir()
-        (cand / "candidate.py").write_text(code)
+        (cand / "candidate.py").write_text(code, encoding="utf-8")
         for name, text in (support_files or {}).items():
             (cand / name).write_text(text)
         tests_path, out_path = work / "tests.json", work / "out.json"
-        tests_path.write_text(json.dumps(tests))
-        overall = per_test_timeout * len(tests) + 10
+        # Windows has no SIGALRM. A separate process per case prevents a loop
+        # from consuming the remaining cases' time allowance.
+        batches = ([case] for case in tests) if os.name == "nt" else [tests]
+        child_env = {k: os.environ[k] for k in ("SystemRoot", "WINDIR", "TEMP", "TMP", "PATH")
+                     if k in os.environ}
         timed_out = False
-        try:
-            subprocess.run(
-                [sys.executable, "-I", str(HARNESS), str(cand), "candidate", func_name,
-                 str(tests_path), str(out_path), str(per_test_timeout)],
-                cwd=cand, timeout=overall, capture_output=True,
-            )
-        except subprocess.TimeoutExpired:
-            timed_out = True
-        if not out_path.exists():
-            return RunReport(passed=0, total=len(tests), import_error="Crash: no result (killed or timed out)",
-                             timed_out=timed_out)
-        report = json.loads(out_path.read_text())
-        if report["import_error"]:
-            return RunReport(passed=0, total=len(tests), import_error=report["import_error"])
+        results = []
+        for batch in batches:
+            tests_path.write_text(json.dumps(batch), encoding="utf-8")
+            out_path.unlink(missing_ok=True)
+            timeout = per_test_timeout + 0.5 if os.name == "nt" else per_test_timeout * len(batch) + 10
+            try:
+                subprocess.run(
+                    [sys.executable, "-I", str(HARNESS), str(cand), "candidate", func_name,
+                     str(tests_path), str(out_path), str(per_test_timeout)],
+                    cwd=cand, timeout=timeout, env=child_env,
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                results.extend({"id": t["id"], "passed": False, "got": None, "error": "Timeout"} for t in batch)
+                continue
+            if not out_path.exists():
+                return RunReport(0, len(tests), import_error="Crash: no result")
+            report = json.loads(out_path.read_text())
+            if report["import_error"]:
+                return RunReport(0, len(tests), import_error=report["import_error"])
+            results.extend(report["results"])
         by_id = {t["id"]: t for t in tests}
         failures = [
             {"id": r["id"], "input": by_id[r["id"]]["input"], "expected": by_id[r["id"]]["output"],
              "got": r["got"], "error": r["error"]}
-            for r in report["results"] if not r["passed"]
+            for r in results if not r["passed"]
         ]
-        passed = sum(r["passed"] for r in report["results"])
+        passed = sum(r["passed"] for r in results)
         return RunReport(passed=passed, total=len(tests), failures=failures, timed_out=timed_out)
     finally:
         shutil.rmtree(work, ignore_errors=True)

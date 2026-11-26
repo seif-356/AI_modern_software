@@ -1,0 +1,27 @@
+{
+  "sha256": "2ffce7c31453df6b01fad3a630795ce6952b3fb289ca7c249b37ff133e0ec932",
+  "upstream_commit": "43f0834a82c5e3bc4516c079fe7765f63b1a15cd",
+  "selection": "Purposive six-bug panel, three per dataset. Every original has an identifier-renamed twin.",
+  "inputs": "QuixBugs uses its archived split. Contest inputs and expected outputs are study-authored.",
+  "adaptation": "One input line becomes a positional string. Captured print lines become the returned string.",
+  "license": "ConDefects adaptations: CC BY-SA 4.0. QuixBugs adaptations: MIT (see ../quixbugs/QUIXBUGS_LICENSE).",
+  "sources": {
+    "condefects/abc223_a/45813374": "https://github.com/appmlk/ConDefects/tree/43f0834a82c5e3bc4516c079fe7765f63b1a15cd/Code/abc223_a/Python/45813374",
+    "condefects/abc223_b/53513467": "https://github.com/appmlk/ConDefects/tree/43f0834a82c5e3bc4516c079fe7765f63b1a15cd/Code/abc223_b/Python/53513467",
+    "condefects/abc225_a/44428733": "https://github.com/appmlk/ConDefects/tree/43f0834a82c5e3bc4516c079fe7765f63b1a15cd/Code/abc225_a/Python/44428733"
+  },
+  "ids": [
+    "quixbugs/gcd",
+    "quixbugs/gcd/renamed",
+    "quixbugs/is_valid_parenthesization",
+    "quixbugs/is_valid_parenthesization/renamed",
+    "quixbugs/max_sublist_sum",
+    "quixbugs/max_sublist_sum/renamed",
+    "condefects/abc223_a/45813374",
+    "condefects/abc223_a/45813374/renamed",
+    "condefects/abc223_b/53513467",
+    "condefects/abc223_b/53513467/renamed",
+    "condefects/abc225_a/44428733",
+    "condefects/abc225_a/44428733/renamed"
+  ]
+}

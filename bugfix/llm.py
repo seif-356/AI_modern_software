@@ -119,7 +119,8 @@ class OpenAICompatibleLLM:
 
     def __init__(self, model: str | None = None, base_url: str | None = None,
                  api_key: str | None = None, temperature: float = 0.2,
-                 per_call_max_tokens: int = 1500, retries: int = 10, rpm: float | None = None):
+                 per_call_max_tokens: int = 1500, retries: int = 10, rpm: float | None = None,
+                 max_prompt_bytes: int | None = None):
         from openai import OpenAI
 
         self.model = model or os.environ.get("LLM_MODEL") or ""
@@ -128,6 +129,7 @@ class OpenAICompatibleLLM:
         self.temperature = temperature
         self.per_call_max_tokens = per_call_max_tokens
         self.retries = retries
+        self.max_prompt_bytes = max_prompt_bytes
         self.client = OpenAI(
             base_url=base_url or os.environ.get("LLM_BASE_URL") or "https://api.openai.com/v1",
             api_key=api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"),
@@ -137,15 +139,20 @@ class OpenAICompatibleLLM:
 
     def chat(self, messages: list[dict], budget: Budget, role: str) -> str:
         budget.check()
+        if self.max_prompt_bytes is not None:
+            size = sum(len(m["content"].encode("utf-8")) + 32 for m in messages)
+            if size > self.max_prompt_bytes:
+                raise ValueError("Prompt exceeds the configured input limit")
         max_tokens = max(1, min(self.per_call_max_tokens, budget.remaining_tokens))
         last_err: Exception | None = None
         for attempt in range(self.retries):
             self.limiter.wait()
             t0 = time.time()
             try:
+                limit = ({"max_completion_tokens": max_tokens, "reasoning_effort": "none"}
+                         if self.model.startswith("gpt-5.4-nano") else {"max_tokens": max_tokens})
                 resp = self.client.chat.completions.create(
-                    model=self.model, messages=messages,
-                    temperature=self.temperature, max_tokens=max_tokens,
+                    model=self.model, messages=messages, temperature=self.temperature, **limit,
                 )
             except Exception as err:  # rate limits / transient network errors
                 detail = f"{err} {getattr(err, 'code', '')} {getattr(err, 'body', '')}"
@@ -153,7 +160,8 @@ class OpenAICompatibleLLM:
                     raise QuotaExhausted(detail[:2000]) from err
                 last_err = err
                 rate_limited = "429" in detail or "RESOURCE_EXHAUSTED" in detail
-                time.sleep(_retry_after(detail) if rate_limited else 2 ** min(attempt, 5))
+                if attempt + 1 < self.retries:
+                    time.sleep(_retry_after(detail) if rate_limited else 2 ** min(attempt, 5))
                 continue
             text = resp.choices[0].message.content or ""
             usage = getattr(resp, "usage", None)
@@ -161,7 +169,7 @@ class OpenAICompatibleLLM:
             o = getattr(usage, "completion_tokens", None) or _estimate_tokens(text)
             budget.charge(role, p, o, time.time() - t0)
             return text
-        raise RuntimeError(f"LLM call failed after {self.retries} attempts: {last_err}")
+        raise RuntimeError(f"LLM call failed after {self.retries} attempts") from last_err
 
 
 class ScriptedLLM:

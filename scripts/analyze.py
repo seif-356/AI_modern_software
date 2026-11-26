@@ -57,7 +57,7 @@ def exact_mcnemar(b: int, c: int) -> float:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--raw", default="results/raw/quixbugs.jsonl")
+    ap.add_argument("--raw", default="results/raw/quixbugs_gemini-3.5-flash-lite.jsonl")
     ap.add_argument("--out", default="results")
     ap.add_argument("--price-in", type=float, help="USD per 1M prompt tokens (optional)")
     ap.add_argument("--price-out", type=float, help="USD per 1M output tokens (optional)")

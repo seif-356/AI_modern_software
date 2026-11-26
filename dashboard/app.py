@@ -17,11 +17,11 @@ from analyze import FLAGS, NAMES, load  # noqa: E402
 st.set_page_config(page_title="Multi-Agent Bug Fixing", layout="wide")
 st.title("Multi-agent vs single-agent bug fixing")
 
-raw_files = sorted((ROOT / "results" / "raw").glob("*.jsonl"))
+raw_files = sorted((ROOT / "results").glob("**/raw/*.jsonl"))
 if not raw_files:
     st.info("No results yet. Run scripts/run_experiment.py first.")
     st.stop()
-raw_path = st.sidebar.selectbox("Results file", raw_files, format_func=lambda p: p.name)
+raw_path = st.sidebar.selectbox("Results file", raw_files, format_func=lambda p: str(p.relative_to(ROOT / "results")))
 df = load(raw_path)
 records = [json.loads(l) for l in raw_path.read_text().splitlines() if l.strip()]
 st.sidebar.write(f"Model: `{df.model.iloc[0]}`")
@@ -49,6 +49,8 @@ st.subheader("Hallucination flags (share of attempts)")
 st.bar_chart(df.groupby("system")[FLAGS].mean().rename(index=NAMES))
 
 summary_dir = raw_path.parent.parent
+if raw_path.parent.parent.name == "phase3":
+    summary_dir = summary_dir / "by_model" / raw_path.stem
 for name, title in [("mcnemar.csv", "McNemar tests"), ("reviewer.csv", "Reviewer agent (S2)")]:
     if (summary_dir / name).exists():
         st.subheader(title)
@@ -71,7 +73,10 @@ rec = next((r for r in records if r["bug_id"] == bug_id and r["system"] == syste
 if rec:
     st.write(f"**{rec['label']}** · stop: {rec['stop_reason']} · visible {rec['visible_passed']}/{rec['visible_total']}"
              f" · held-out {rec['heldout_passed']}/{rec['heldout_total']} · calls {rec['usage']['calls']}")
-    data = ROOT / "data" / "quixbugs" / "bugs.jsonl"
+    cohort = "phase3" if "profile" in rec else "quixbugs"
+    if raw_path.stem.endswith("-breadth"):
+        cohort = "condefects"
+    data = ROOT / "data" / cohort / "bugs.jsonl"
     buggy = ""
     if data.exists():
         for line in data.read_text().splitlines():

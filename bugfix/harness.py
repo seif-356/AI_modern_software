@@ -9,10 +9,19 @@ never shares a process with the experiment runner.
 import importlib
 import json
 import math
-import resource
 import signal
 import sys
 import types
+
+try:
+    import resource
+except ImportError:  # Windows uses parent-enforced case timeouts.
+    resource = None
+
+
+def timer(seconds):
+    if hasattr(signal, "setitimer"):
+        signal.setitimer(signal.ITIMER_REAL, seconds)
 
 
 class _Timeout(Exception):
@@ -51,8 +60,9 @@ def main():
     per_test = float(per_test)
     # 1 GiB address space, no core dumps.
     try:
-        resource.setrlimit(resource.RLIMIT_AS, (1 << 30, 1 << 30))
-        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+        if resource is not None:
+            resource.setrlimit(resource.RLIMIT_AS, (1 << 30, 1 << 30))
+            resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     except (ValueError, OSError):
         pass
     sys.setrecursionlimit(5000)
@@ -62,13 +72,14 @@ def main():
 
     report = {"import_error": None, "results": []}
     try:
-        signal.signal(signal.SIGALRM, _alarm)
-        signal.setitimer(signal.ITIMER_REAL, per_test * 2)
+        if hasattr(signal, "SIGALRM"):
+            signal.signal(signal.SIGALRM, _alarm)
+        timer(per_test * 2)
         mod = importlib.import_module(module)
-        signal.setitimer(signal.ITIMER_REAL, 0)
+        timer(0)
         fn = getattr(mod, func)
     except BaseException as err:  # noqa: BLE001 - we want every failure mode
-        signal.setitimer(signal.ITIMER_REAL, 0)
+        timer(0)
         report["import_error"] = f"{type(err).__name__}: {err}"[:300]
         with open(out_path, "w") as f:
             json.dump(report, f)
@@ -78,9 +89,9 @@ def main():
         args = case["input"] if isinstance(case["input"], list) else [case["input"]]
         res = {"id": case["id"], "passed": False, "error": None, "got": None}
         try:
-            signal.setitimer(signal.ITIMER_REAL, per_test)
+            timer(per_test)
             got = _plain(fn(*json.loads(json.dumps(args))))
-            signal.setitimer(signal.ITIMER_REAL, 0)
+            timer(0)
             if "abs_tol" in case and isinstance(got, (int, float)):
                 res["passed"] = math.isclose(got, case["output"], rel_tol=0, abs_tol=case["abs_tol"])
             else:
@@ -89,7 +100,7 @@ def main():
         except _Timeout:
             res["error"] = "Timeout"
         except BaseException as err:  # noqa: BLE001
-            signal.setitimer(signal.ITIMER_REAL, 0)
+            timer(0)
             res["error"] = f"{type(err).__name__}: {err}"[:200]
         report["results"].append(res)
 
