@@ -90,12 +90,22 @@ def main():
                 raise RuntimeError("Local model did not become ready")
             failed = []
             for cohort in args.cohort:
-                result = subprocess.run(
-                    [sys.executable, "-u", str(ROOT / "scripts/run_phase3.py"),
-                     "--profile", args.profile, "--workers", "2", "--cohort", cohort],
-                    cwd=ROOT,
-                )
-                if result.returncode:
+                command = [sys.executable, "-u", str(ROOT / "scripts/run_phase3.py"),
+                           "--profile", args.profile, "--workers", "2", "--cohort", cohort]
+                for attempt in range(4):
+                    with subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE,
+                                          stderr=subprocess.STDOUT, text=True, errors="replace") as child:
+                        transient = False
+                        for line in child.stdout:
+                            print(line, end="", flush=True)
+                            if any(x in line for x in ("APITimeoutError", "APIConnectionError",
+                                                       "HTTP 502", "HTTP 503", "HTTP 504")):
+                                transient = True
+                        result_code = child.wait()
+                    if result_code == 0 or not transient or attempt == 3:
+                        break
+                    time.sleep(10)
+                if result_code:
                     failed.append(cohort)
             if failed:
                 raise SystemExit(f"{args.profile}: unfinished cohorts: {', '.join(failed)}")

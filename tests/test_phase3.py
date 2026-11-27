@@ -13,6 +13,36 @@ from bugfix.bugs import load_bugs
 from bugfix.sandbox import run_tests
 
 
+def test_shared_credit_ceiling_survives_concurrent_reservations_and_restart(tmp_path, monkeypatch):
+    import sqlite3
+    from concurrent.futures import ThreadPoolExecutor
+    from contextlib import closing
+    from types import SimpleNamespace
+    import phase3_credit as credit
+
+    path = tmp_path / "calls.sqlite"
+    model = "gpt-4.1-mini-2025-04-14"
+    messages = [{"role": "user", "content": "x"}]
+    monkeypatch.setattr(credit, "CAP", 1_000_000)
+
+    def attempt(_):
+        try:
+            return credit.CreditLedger(path).reserve(model, messages, 512)
+        except credit.CreditLimitReached:
+            return None
+
+    with ThreadPoolExecutor(4) as pool:
+        accepted = [r for r in pool.map(attempt, range(4)) if r is not None]
+    assert len(accepted) == 1
+    ledger = credit.CreditLedger(path)
+    ledger.settle(accepted[0], model, None)
+    assert attempt(0) is None
+    ledger.settle(accepted[0], model, SimpleNamespace(prompt_tokens=10, completion_tokens=20))
+    with closing(sqlite3.connect(path)) as db:
+        assert db.execute("SELECT SUM(amount) FROM calls").fetchone()[0] == 36_000
+    assert attempt(0) is not None
+
+
 def test_full_dataset_dry_runs_reuse_only_identical_inputs(monkeypatch, capsys, tmp_path):
     from argparse import Namespace
     import run_phase3

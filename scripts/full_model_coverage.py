@@ -11,8 +11,10 @@ from run_phase3 import COHORT_DATA, PROFILES, ROOT
 FULL = ROOT / "results/phase3/full-models"
 RAW = ROOT / "results/phase3/raw"
 MODES = ("s0", "s1", "s2", "s2r")
-PROFILES_TO_REPORT = ("openai", "qwen", "smollm2", "deepseek-coder", "orca", "archive-gemini",
-                      "muse-web", "muse", "deepseek")
+ADDITIONAL_MODELS = {"gpt4o-mini": "GPT-4o mini", "gpt41-mini": "GPT-4.1 mini", "olmo": "OLMo 2 1B",
+                     "granite": "Granite 3.3 2B", "phi3": "Phi-3 mini"}
+PROFILES_TO_REPORT = ("openai", "qwen", "smollm2", *ADDITIONAL_MODELS,
+                      "archive-gemini", "muse-web", "muse")
 MODEL_NAMES = {profile: config[0] for profile, config in PROFILES.items()}
 MODEL_NAMES.update({"archive-gemini": "gemini-3.5-flash-lite", "muse-web": "Muse web (Edge)",
                     "muse": "muse-spark-1.3 (Meta API)", "deepseek": "DeepSeek direct (no model run)"})
@@ -67,6 +69,7 @@ def audit(missing_file=None, paper=False):
                 missing.append(dict(model_or_route=MODEL_NAMES[profile], dataset=dataset, task_id=bug,
                                     missing_workflow=mode))
             correct = Counter(mode for (_, mode), r in cells.items() if r["label"] == "correct")
+            observed = Counter(mode for _, mode in cells)
             violations = sum(
                 bool(r["usage"].get("provider_limit_violations"))
                 or r["usage"]["output_tokens"] > min(r["max_output_tokens"],
@@ -78,6 +81,7 @@ def audit(missing_file=None, paper=False):
                                 planned=len(target), completed=len(cells),
                                 missing=len(target)-len(cells), newly_collected=len(new_rows),
                                 **{f"{mode}_correct": correct[mode] for mode in MODES},
+                                **{f"{mode}_observed": observed[mode] for mode in MODES},
                                 known_budget_violations=violations if profile != "muse-web" else "",
                                 new_prompt_tokens=sum(r["usage"]["prompt_tokens"] for r in new_rows),
                                 new_output_tokens=sum(r["usage"]["output_tokens"] for r in new_rows)))
@@ -90,8 +94,7 @@ def audit(missing_file=None, paper=False):
                 writer.writeheader()
                 writer.writerows(rows)
     if paper:
-        names = {"openai": "GPT-5.4 nano", "qwen": "Qwen Coder", "smollm2": "SmolLM2",
-                 "deepseek-coder": "DeepSeek-Coder"}
+        names = {"openai": "GPT-5.4 nano", "qwen": "Qwen Coder", "smollm2": "SmolLM2"}
         lines = []
         for row in summary:
             if row["profile"] not in names:
@@ -103,6 +106,16 @@ def audit(missing_file=None, paper=False):
             lines.append(" & ".join([cohort, names[row["profile"]], *values]) + r"\\")
         path = ROOT / "docs/phase3/full_model_rows.tex"
         path.write_text("\\newcommand{\\FullModelRows}{%\n" + "\n".join(lines) + "%\n}\n", encoding="utf-8")
+        lines = []
+        for row in summary:
+            if row["profile"] not in ADDITIONAL_MODELS:
+                continue
+            dataset = "QuixBugs" if row["dataset"] == "quixbugs" else "ConDefects"
+            scores = [f"{row[m + '_correct']}/{row[m + '_observed']}" if row[m + '_observed'] else "--"
+                      for m in MODES]
+            lines.append(" & ".join([dataset, ADDITIONAL_MODELS[row["profile"]], *scores]) + r"\\")
+        path = ROOT / "docs/phase3/additional_model_rows.tex"
+        path.write_text("\\newcommand{\\AdditionalModelRows}{%\n" + "\n".join(lines) + "%\n}\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

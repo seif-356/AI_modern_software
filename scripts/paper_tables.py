@@ -8,19 +8,17 @@ from analyze import exact_mcnemar
 
 NAMES = {
     "openai": "GPT-5.4 nano",
-    "orca": "DeepSeek V4 Flash",
     "qwen": "Qwen2.5-Coder 1.5B",
     "smollm2": "SmolLM2 1.7B",
-    "deepseek-coder": "DeepSeek Coder 1.3B",
     "muse": "Muse Spark 1.3",
-    "deepseek": "DeepSeek Flash",
 }
 MODES = ["s0", "s1", "s2", "s2r"]
 
 
 def main():
     raw = {p.stem: records(p) for p in sorted((OUT / "raw").glob("*.jsonl"))}
-    total = sum(map(len, raw.values()))
+    active = {k: v for k, v in raw.items() if k.removesuffix("-breadth") in NAMES}
+    total = sum(map(len, active.values()))
     archive = records(ARCHIVE)
     values = {}
     values["NewAttempts"] = total
@@ -38,18 +36,15 @@ def main():
         }
     panel = []
     probe = []
-    for name, rows in raw.items():
+    for name, rows in active.items():
         if name.endswith("-breadth"):
             continue
-        if name != "orca":
-            rows = [r for r in rows if (name, r["bug_id"], r["system"], r["run"]) in eligible]
+        rows = [r for r in rows if (name, r["bug_id"], r["system"], r["run"]) in eligible]
         counts = [
             f"{sum(r['label'] == 'correct' for r in rows if r['system'] == s)}/{sum(r['system'] == s for r in rows)}"
             for s in MODES
         ]
         panel.append(" & ".join([NAMES[name], *counts]) + r" \\")
-        if name == "orca":
-            continue  # Gateway usage exceeded requested limits; descriptive counts only.
         for dataset in ("quixbugs", "condefects"):
             lookup = {
                 (r["bug_id"], r["system"]): r["label"] == "correct"

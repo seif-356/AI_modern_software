@@ -137,6 +137,18 @@ python scripts/run_local.py --profile deepseek-coder --server /path/to/llama-ser
 
 The helper verifies the SHA-256 weight digest, starts a loopback-only service with the expected alias, runs the panel and terminates the process. The general FastAPI app can also use a running model server. Set `LLM_MODEL`, `LLM_BASE_URL` and `LLM_API_KEY` to its alias, loopback API URL and local placeholder key. Run `python -m uvicorn bugfix.api:app --host 127.0.0.1` and use the interactive documentation at `http://127.0.0.1:8000/docs` to post a repair.
 
+## Additional model comparison
+
+The additional models use the original QuixBugs and ConDefects cohorts, one run per workflow. The two hosted snapshots are `gpt-4o-mini-2024-07-18` and `gpt-4.1-mini-2025-04-14`. The text-only calls use the standard service tier. The runner reserves credit for every request in a shared SQLite ledger under `results/phase3/full-models`. Preserve the ledger when resuming. Ambiguous requests retain their maximum reservation. The combined cap is $1.50. Published standard uncached prices per million input/output tokens were $0.15/$0.60 and $0.40/$1.60 respectively. [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini) · [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini)
+
+The local models use the following publisher releases. The local runner checks the SHA-256 digest before starting each model. Select `--cohort full-quixbugs full-condefects` for both datasets. Regenerate the coverage CSV and LaTeX tables with `python scripts/full_model_coverage.py --paper`.
+
+| Profile | Publisher release | Quantization |
+|---|---|---|
+| olmo | [AllenAI OLMo 2 0425 1B Instruct](https://huggingface.co/allenai/OLMo-2-0425-1B-Instruct-GGUF/tree/62f8c199538474c3e33ed5d7e0580abd66686a27) | Q4_K_M |
+| granite | [IBM Granite 3.3 2B Instruct](https://huggingface.co/ibm-granite/granite-3.3-2b-instruct-GGUF/tree/7cdf86ccd1f1bb3491c9b7017b033f2e51367397) | Q4_K_M |
+| phi3 | [Microsoft Phi-3 Mini 4K Instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/tree/a64113399c2f6b8ad3e11c394733a2ddadaa7f33) | Publisher Q4 |
+
 ## Independent review and course submission
 
 Two team members each make a separate copy of the [blinded packet](../../results/phase3/review_packet.csv). Use the specification link and compare the candidate with the reference. Mark `correct` or `incorrect` and supply a short rationale or counterexample for each row. Preserve both original sets of judgments before discussing disagreements. The [key](../../results/phase3/review_key.json) maps packet IDs to model attempts after adjudication.

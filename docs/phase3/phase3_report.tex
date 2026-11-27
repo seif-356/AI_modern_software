@@ -4,6 +4,7 @@
 \usepackage[hidelinks]{hyperref}
 \input{evidence}
 \input{full_model_rows}
+\input{additional_model_rows}
 \title{When a Code Reviewer Agrees with a Wrong Patch:\\Budget-Controlled Language-Model Repair on Python Bugs}
 \author{\IEEEauthorblockN{SW403 project research draft for team review}
 \IEEEauthorblockA{AI in Modern Software Engineering, Zewail City of Science and Technology\\
@@ -11,7 +12,7 @@ Fall 2026 \quad$\cdot$\quad AI assistance and outstanding human review are discl
 \begin{document}
 \maketitle
 \begin{abstract}
-A repair workflow can spend extra model calls on diagnosis, retries or review. We study which use of those calls yields patches that survive additional tests. The starting evidence is a frozen set of 372 Gemini 3.5 Flash-Lite attempts on 31 QuixBugs programs. We add \NewAttempts{} observed attempts, including a matched identifier-renaming panel and a difficulty-stratified ConDefects evaluation. Each repair sees the original source and failing examples. We evaluate its final candidate on a second test partition. The archived single agent passed both partitions in 90 of 93 attempts. The agent team passed in 89, while using 3.2 times as many output tokens per attempt. Two of its approvals endorsed a patch that mishandled all-negative lists. On 100 distinct ConDefects tasks, GPT-5.4 nano repaired 80 with the single agent and 71 with the agent team (paired exact $p=0.093$). In the new matched panel, GPT-5.4 nano reproduced that error after renaming. We report paired counts, model-specific budgets and trace-level counterexamples. A reviewer that shares the fixer's assumptions can miss exactly the distinction that a held-out test exposes.
+A repair workflow can spend extra model calls on diagnosis, retries or review. We study which use of those calls yields patches that survive additional tests. The starting evidence is a frozen set of 372 Gemini 3.5 Flash-Lite attempts on 31 QuixBugs programs. The initial Phase~3 collection contains \NewAttempts{} observed attempts, including a matched identifier-renaming panel and a difficulty-stratified ConDefects evaluation. Subsequent full-dataset trials and a separate browser study extend that collection. Each repair sees the original source and failing examples. We evaluate its final candidate on a second test partition. The archived single agent passed both partitions in 90 of 93 attempts. The agent team passed in 89, while using 3.2 times as many output tokens per attempt. Two of its approvals endorsed a patch that mishandled all-negative lists. On 100 distinct ConDefects tasks, GPT-5.4 nano repaired 80 with the single agent and 71 with the agent team (paired exact $p=0.093$). In the new matched panel, GPT-5.4 nano reproduced that error after renaming. We report paired counts, model-specific budgets and trace-level counterexamples. A reviewer that shares the fixer's assumptions can miss exactly the distinction that a held-out test exposes.
 \end{abstract}
 \begin{IEEEkeywords}
 automated program repair, multi-agent systems, test-suite overfitting, software engineering, large language models
@@ -105,9 +106,9 @@ The reviewer issued decisions on 84 final S2 patches. It approved 81 that passed
 \PanelRows
 \bottomrule\end{tabular}
 \end{table}
-Each numerator counts attempts whose final patch passes both partitions. Each denominator counts records in that system's run file. Within each row the same base model supplies all roles. Local models use pinned four-bit weights. GPT is a dated hosted snapshot. The hosted DeepSeek V4 Flash row is diagnostic: the free gateway returned 28 of 48 planned attempts before its quota stopped the run. Ten records reported completion usage above the smaller of 1,536 and 512 times the number of completed calls. Four exceeded 1,536. These records cannot support an equal-budget comparison. We retain all 28 traces for inspection and omit the gateway from paired inference. The local DeepSeek Coder model is a distinct checkpoint.
+Each numerator counts attempts whose final patch passes both partitions. Each denominator counts records in that system's run file. Within each row the same base model supplies all roles. Local models use pinned four-bit weights. GPT is a dated hosted snapshot.
 
-Across the matched panel and breadth study, the 448 GPT attempts used 551,202 input tokens and 210,299 output tokens, an estimated US\$0.37 at the listed uncached rates. The three local models incurred no provider API fees. Meta's API declined generation during billing verification. We evaluated its consumer web app separately.
+Across the matched panel and breadth study, the 448 GPT attempts used 551,202 input tokens and 210,299 output tokens, an estimated US\$0.37 at the listed uncached rates. The two local models incurred no provider API fees. Meta's API declined generation during billing verification. We evaluated its consumer web app separately.
 
 GPT fixed two of the three original QuixBugs programs under each architecture, and the same two after renaming. The failed maximum-sublist case generalizes the archived reviewer example to another model under a smaller budget. In the contest subset GPT also fixed two of three originals and two of three renamed programs under every architecture. The totals conceal a change in failure type. An S1 original that accepted only 100 passed visible tests and failed a reserved larger multiple. Its renamed counterpart failed visible tests. Binary correctness alone misses that difference.
 
@@ -192,7 +193,7 @@ S2-R & 31 & 30 & 62 & 100 & 98 & 200\\\bottomrule
 All four QuixBugs workflows timed out on one held-out Levenshtein case during collection. The S0 patch passed that case on a subsequent local execution, so this result depends on runtime. On ConDefects, S2 and S2-R passed both partitions on the same 98 tasks. Both missed ABC354 A and ABC285 A despite passing every visible example. The two workflows differed by 103 measured messages. These are observations of the browser product with one trial per cell. The underlying model version and token budget were unavailable.
 
 \subsection{Full-dataset extension for GPT and local models}
-We applied the four workflows once to each original QuixBugs program and each breadth-sample ConDefects task using GPT-5.4 nano, Qwen2.5-Coder 1.5B, SmolLM2 1.7B and DeepSeek-Coder 1.3B. Each model already had 12 workflow results on three identical QuixBugs inputs. GPT also had all 400 ConDefects results. These 448 earlier observations and 1,648 newly scored trials cover the 2,096 model--task--workflow combinations. The earlier observations retain their original scores. The Muse browser product and the three-repeat Gemini archive have separate measurement protocols.
+We applied the four workflows once to each original QuixBugs program and each breadth-sample ConDefects task using GPT-5.4 nano, Qwen2.5-Coder 1.5B and SmolLM2 1.7B. Each model already had 12 workflow results on three identical QuixBugs inputs. GPT also had all 400 ConDefects results. These 436 earlier observations and 1,136 newly scored trials cover all 1,572 combinations. The Muse browser product and the Gemini archive have separate measurement protocols.
 
 \begin{table}[ht]
 \centering
@@ -204,11 +205,27 @@ Dataset & Model & S0 & S1 & S2 & S2-R\\\midrule
 \bottomrule\end{tabular}
 \end{table}
 
-On ConDefects, moving from S1 to S2 changed the pass counts from 80 to 71 for GPT, 8 to 5 for Qwen, 4 to 9 for SmolLM2 and 8 to 11 for DeepSeek-Coder. The direction of the change depended on the model. These counts describe one trial per cell on the selected tasks.
+On ConDefects, moving from S1 to S2 changed the pass counts from 80 to 71 for GPT, 8 to 5 for Qwen, and 4 to 9 for SmolLM2. The direction of the change depended on the model. These counts describe one trial per cell on the selected tasks.
 
-The local models used the same pinned quantized weights as the matched panel. Eight new QuixBugs trials on \texttt{wrap} stopped when a later prompt reached the input byte limit or the local context limit. The scorer evaluated the candidate available at that point. All eight stops are identified in the raw records.
+The local models used the same pinned quantized weights as the matched panel. Six new QuixBugs trials on \texttt{wrap} stopped when a later prompt reached the input byte limit or the local context limit. The scorer evaluated the candidate available at that point. All six stops are identified in the raw records.
 
-OrcaRouter's free DeepSeek V4 Flash route yielded 18 additional QuixBugs trials and 20 ConDefects trials before its quota closed. The service reported output above the requested cap in 25 of these 38 trials. We retain them as diagnostics and exclude the route from Table~\ref{tab:full-models}.
+
+
+\subsection{Additional hosted and local models}
+We extended the same four workflows to two dated OpenAI snapshots (GPT-4o mini and GPT-4.1 mini) and three local four-bit instruction models (OLMo 2 1B, Granite 3.3 2B, and Phi-3 mini). The dataset, test partitions, temperature and per-attempt ceilings match the full-dataset extension. Each model has 124 planned QuixBugs trials and 400 planned ConDefects trials. A shared \$1.50 ceiling covers both hosted models. The runner reserves the maximum estimated cost before each request and reconciles it against reported tokens at standard uncached rates. The local runs incur no API fee.
+
+\begin{table}[ht]
+\centering\small
+\setlength{\tabcolsep}{3pt}
+\caption{Additional models. Each entry gives repairs passing both test partitions divided by completed trials. A dash denotes zero completed trials. Each workflow has 31 planned QuixBugs trials and 100 planned ConDefects trials.}
+\label{tab:additional-models}
+\begin{tabular}{@{}llrrrr@{}}\toprule
+Dataset & Model & S0 & S1 & S2 & S2-R\\\midrule
+\AdditionalModelRows
+\bottomrule\end{tabular}
+\end{table}
+
+Both additional GPT models completed all 524 planned trials. On ConDefects, single-agent retry (S1) passed 79 tasks with GPT-4.1 mini and 68 with GPT-4o mini. The agent team (S2) passed 75 and 61, respectively. The same workflow ordering held on QuixBugs. These counts describe one trial per workflow and task. Reported tokens across the hosted extension cost \$0.7951 at uncached rates. Eight requests without confirmed usage retained \$0.0076 in reservations, giving a conservative combined bound of \$0.8027.
 
 \section{Discussion}
 \subsection{Where extra calls go}
@@ -238,7 +255,7 @@ The replication package also assigns evidence-based MAST codes to individual fai
 \section{Ethical Considerations and Human Review}\label{sec:ethics}
 QuixBugs retains its MIT notice. ConDefects programs and adaptations retain attribution and the dataset's CC BY-SA 4.0 terms. Each selected submission includes a source link and identifier. Public AtCoder examples are credited to their task pages, which have separate provenance. The study examines short competitive-programming submissions. Enterprise code, multilingual specifications and maintenance work that depends on repository history fall outside its sampled population. The results are inappropriate for ranking individual contestants.
 
-For the planned review, the script samples \ReviewSample{} of \ReviewEligible{} visible-passing attempts using a fixed seed and rounds the sample size up. A packet contains the source, candidate and reference under an opaque identifier. Two team members independently decide whether each candidate satisfies the specification and record a counterexample or justification. The scorer requires both rating files to cover exactly the same identifiers. It reports observed agreement and Cohen's $\kappa$ when defined. At preparation time both ratings were outstanding. All empirical claims here use automated labels.
+For the planned review of the original unfiltered collection, the script samples \ReviewSample{} of \ReviewEligible{} visible-passing attempts using a fixed seed and rounds the sample size up. A packet contains the source, candidate and reference under an opaque identifier. Two team members independently decide whether each candidate satisfies the specification and record a counterexample or justification. The scorer requires both rating files to cover exactly the same identifiers. It reports observed agreement and Cohen's $\kappa$ when defined. At preparation time both ratings were outstanding. All empirical claims here use automated labels.
 
 The Phase 2 report discloses Claude Code assistance. OpenAI Codex prepared the Phase 3 code, ran the experiments and prepared this research draft and presentation. The experimental models are identified in the run inventory. The course requires the team to verify its evidence, write its own submission and give credit for each member's actual contribution.
 
