@@ -82,6 +82,29 @@ def test_later_context_rejection_preserves_existing_calls(monkeypatch):
     assert budget.context_limit_reached and budget.calls == 1
 
 
+def test_long_rate_window_stops_without_early_retries(monkeypatch):
+    from types import SimpleNamespace
+    from bugfix.llm import Budget, OpenAICompatibleLLM, QuotaExhausted
+
+    class RateWindow(Exception):
+        status_code = 429
+        response = SimpleNamespace(headers={"retry-after": "2700"})
+
+    calls = []
+
+    def reject(**kwargs):
+        calls.append(kwargs)
+        raise RateWindow("HTTP 429")
+
+    client = OpenAICompatibleLLM(model="local", base_url="http://127.0.0.1:1/v1", api_key="local",
+                                 retries=4)
+    monkeypatch.setattr(client.client.chat.completions, "create", reject)
+    budget = Budget()
+    with pytest.raises(QuotaExhausted, match="rate window"):
+        client.chat([{"role": "user", "content": "fix"}], budget, "fixer")
+    assert len(calls) == 1 and budget.calls == 0
+
+
 def test_local_renaming_keeps_recursive_calls():
     bug = load_bugs(ROOT / "data/quixbugs/bugs.jsonl", ["quixbugs/gcd"])[0]
     twin = renamed(bug)

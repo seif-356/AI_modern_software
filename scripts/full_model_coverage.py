@@ -67,10 +67,18 @@ def audit(missing_file=None, paper=False):
                 missing.append(dict(model_or_route=MODEL_NAMES[profile], dataset=dataset, task_id=bug,
                                     missing_workflow=mode))
             correct = Counter(mode for (_, mode), r in cells.items() if r["label"] == "correct")
+            violations = sum(
+                bool(r["usage"].get("provider_limit_violations"))
+                or r["usage"]["output_tokens"] > min(r["max_output_tokens"],
+                                                    r["usage"]["calls"] * r.get("per_call_max_tokens", 1500))
+                or r["usage"]["calls"] > r["max_calls"]
+                for r in cells.values() if "usage" in r
+            )
             summary.append(dict(profile=profile, model_or_route=MODEL_NAMES[profile], dataset=dataset,
                                 planned=len(target), completed=len(cells),
                                 missing=len(target)-len(cells), newly_collected=len(new_rows),
                                 **{f"{mode}_correct": correct[mode] for mode in MODES},
+                                known_budget_violations=violations if profile != "muse-web" else "",
                                 new_prompt_tokens=sum(r["usage"]["prompt_tokens"] for r in new_rows),
                                 new_output_tokens=sum(r["usage"]["output_tokens"] for r in new_rows)))
     FULL.mkdir(parents=True, exist_ok=True)

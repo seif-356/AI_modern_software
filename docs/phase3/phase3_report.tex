@@ -208,6 +208,8 @@ On ConDefects, moving from S1 to S2 changed the pass counts from 80 to 71 for GP
 
 The local models used the same pinned quantized weights as the matched panel. Eight new QuixBugs trials on \texttt{wrap} stopped when a later prompt reached the input byte limit or the local context limit. The scorer evaluated the candidate available at that point. All eight stops are identified in the raw records.
 
+OrcaRouter's free DeepSeek V4 Flash route yielded 18 additional QuixBugs trials and 20 ConDefects trials before its quota closed. The service reported output above the requested cap in 25 of these 38 trials. We retain them as diagnostics and exclude the route from Table~\ref{tab:full-models}.
+
 \section{Discussion}
 \subsection{Where extra calls go}
 The agent team commits a call to localisation before it tests a fix. That cost is certain even when the defect is obvious. Its benefit depends on whether the diagnosis draws attention to evidence the fixer would have missed. The same dependency can lead a fixer away from the fault. In the archived \texttt{wrap} trace, the localiser focused on whitespace between lines. The fixer appended a final line, but also altered how spaces were carried into the following line. Subsequent fixes kept modifying the split. The visible tests detected the problem, yet repeated feedback did not dislodge the initial diagnosis. This sequence is consistent with inter-agent misalignment in MAST. A counterfactual run with only the diagnosis changed would be needed to attribute causation.

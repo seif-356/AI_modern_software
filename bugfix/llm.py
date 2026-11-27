@@ -171,8 +171,15 @@ class OpenAICompatibleLLM:
                     raise QuotaExhausted(detail[:2000]) from err
                 last_err = err
                 rate_limited = "429" in detail or "RESOURCE_EXHAUSTED" in detail
+                headers = getattr(getattr(err, "response", None), "headers", {})
+                retry_after = str(headers.get("retry-after", "")).strip() if rate_limited else ""
+                if retry_after.isdecimal() and int(retry_after) > 120:
+                    # Leave long windows to the resumable runner without probing
+                    # the provider again before its advertised reset.
+                    raise QuotaExhausted("Provider rate window is full") from err
                 if attempt + 1 < self.retries:
-                    time.sleep(_retry_after(detail) if rate_limited else 2 ** min(attempt, 5))
+                    delay = _retry_after(detail) if rate_limited else 2 ** min(attempt, 5)
+                    time.sleep(int(retry_after) if retry_after.isdecimal() else delay)
                 continue
             text = resp.choices[0].message.content or ""
             usage = getattr(resp, "usage", None)

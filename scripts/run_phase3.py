@@ -194,6 +194,13 @@ def run_cohort(args, out):
                     if status == 429:
                         headers = cause.response.headers
                         message += f"; retry-after={headers.get('retry-after', 'unspecified')}"
+                        if free_route and isinstance(getattr(cause, "body", None), dict):
+                            body = cause.body.get("error", cause.body)
+                            metadata = body.get("metadata") if isinstance(body, dict) else None
+                            if isinstance(metadata, dict) and metadata.get("reason") in {
+                                "err_free_rate", "err_free_access_denied", "err_free_token_limit"
+                            }:
+                                message += f"; reason={metadata['reason']}"
                     errors.append(message)
                     continue
                 with out.open("a", encoding="utf-8") as stream:
