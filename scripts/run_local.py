@@ -15,6 +15,12 @@ from pathlib import Path
 from run_phase3 import PROFILES, ROOT
 
 WEIGHTS = {
+    "olmo": ("OLMo-2-0425-1B-Instruct-Q4_K_M.gguf",
+             "abd8187934a438fbf7cfff0a1de5b9d2793ce913f158794df1951dcba6c93cc6"),
+    "granite": ("granite-3.3-2b-instruct-Q4_K_M.gguf",
+               "ac71e9e32c0bea919b409c5918f69ca74339854b0319c5065e4e9fb6d95c4852"),
+    "phi3": ("Phi-3-mini-4k-instruct-q4.gguf",
+             "8a83c7fb9049a9b2e92266fa7ad04933bb53aa1e85136b7b30f1b8000ff2edef"),
     "deepseek-coder": (
         "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
         "04cebb6fafa40ae628cf6bfeb76032ec792852f54020c559ad0a56b9f2839118",

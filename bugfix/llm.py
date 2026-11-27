@@ -123,7 +123,8 @@ class OpenAICompatibleLLM:
     def __init__(self, model: str | None = None, base_url: str | None = None,
                  api_key: str | None = None, temperature: float = 0.2,
                  per_call_max_tokens: int = 1500, retries: int = 10, rpm: float | None = None,
-                 max_prompt_bytes: int | None = None, stop_at_prompt_limit: bool = False):
+                 max_prompt_bytes: int | None = None, stop_at_prompt_limit: bool = False,
+                 credit_ledger=None):
         from openai import OpenAI
 
         self.model = model or os.environ.get("LLM_MODEL") or ""
@@ -134,6 +135,7 @@ class OpenAICompatibleLLM:
         self.retries = retries
         self.max_prompt_bytes = max_prompt_bytes
         self.stop_at_prompt_limit = stop_at_prompt_limit
+        self.credit_ledger = credit_ledger
         self.client = OpenAI(
             base_url=base_url or os.environ.get("LLM_BASE_URL") or "https://api.openai.com/v1",
             api_key=api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY"),
@@ -155,9 +157,13 @@ class OpenAICompatibleLLM:
         for attempt in range(self.retries):
             self.limiter.wait()
             t0 = time.time()
+            if self.credit_ledger:
+                request = self.credit_ledger.reserve(self.model, messages, max_tokens)
             try:
                 limit = ({"max_completion_tokens": max_tokens, "reasoning_effort": "none"}
                          if self.model.startswith("gpt-5.4-nano") else {"max_tokens": max_tokens})
+                if self.credit_ledger:
+                    limit["service_tier"] = "default"
                 resp = self.client.chat.completions.create(
                     model=self.model, messages=messages, temperature=self.temperature, **limit,
                 )
@@ -181,6 +187,8 @@ class OpenAICompatibleLLM:
                     delay = _retry_after(detail) if rate_limited else 2 ** min(attempt, 5)
                     time.sleep(int(retry_after) if retry_after.isdecimal() else delay)
                 continue
+            if self.credit_ledger:
+                self.credit_ledger.settle(request, self.model, resp.usage)
             text = resp.choices[0].message.content or ""
             usage = getattr(resp, "usage", None)
             p = getattr(usage, "prompt_tokens", None) or _estimate_tokens(str(messages))

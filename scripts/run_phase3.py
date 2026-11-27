@@ -18,9 +18,15 @@ sys.path.insert(0, str(ROOT))
 from bugfix import SYSTEMS, Budget, evaluate, load_bugs
 from bugfix.llm import OpenAICompatibleLLM
 from run_experiment import git_commit
+from phase3_credit import CreditLedger, RATES
 
 # The local llama-server profiles use pinned aliases and bind to loopback.
 PROFILES = {
+    "gpt4o-mini": ("gpt-4o-mini-2024-07-18", "https://api.openai.com/v1", "OPENAI_API_KEY"),
+    "gpt41-mini": ("gpt-4.1-mini-2025-04-14", "https://api.openai.com/v1", "OPENAI_API_KEY"),
+    "olmo": ("olmo-2-0425-1b-instruct-q4_k_m", "http://127.0.0.1:18191/v1", None),
+    "granite": ("granite-3.3-2b-instruct-q4_k_m", "http://127.0.0.1:18192/v1", None),
+    "phi3": ("phi-3-mini-4k-instruct-q4", "http://127.0.0.1:18193/v1", None),
     "qwen": ("qwen2.5-coder-1.5b-instruct-q4_k_m", "http://127.0.0.1:18181/v1", None),
     "smollm2": ("smollm2-1.7b-instruct-q4_k_m", "http://127.0.0.1:18182/v1", None),
     "deepseek-coder": ("deepseek-coder-1.3b-instruct-q4_k_m", "http://127.0.0.1:18183/v1", None),
@@ -106,6 +112,14 @@ def run_cohort(args, out):
         return
     secret = (os.getenv(var) or getpass.getpass(var + ": ")) if var else "local"
     free_route = args.profile == "orca"
+    ledger = None
+    if model in RATES:
+        ledger_dir = ROOT / "results/phase3/full-models"
+        ledger_dir.mkdir(exist_ok=True, parents=True)
+        path = ledger_dir / "openai-extension.sqlite"
+        if not path.exists() and any(ledger_dir.glob("gpt*-mini-*.jsonl")):
+            raise RuntimeError("Restore the study's credit ledger before resuming paid trials")
+        ledger = CreditLedger(path)
     llm = OpenAICompatibleLLM(
         model=model,
         base_url=base,
@@ -116,6 +130,7 @@ def run_cohort(args, out):
         rpm=6 if free_route else 0,
         max_prompt_bytes=16384,
         stop_at_prompt_limit=args.cohort.startswith("full-"),
+        credit_ledger=ledger,
     )
     # Validate the free route against the live catalog before sending any prompts.
     if args.profile == "orca":
