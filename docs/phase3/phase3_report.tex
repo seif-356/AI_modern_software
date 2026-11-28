@@ -190,7 +190,7 @@ S2-R & 31 & 30 & 62 & 100 & 98 & 200\\\bottomrule
 \end{tabular}
 \end{table}
 
-All four QuixBugs workflows timed out on one held-out Levenshtein case during collection. The S0 patch passed that case on a subsequent local execution, so this result depends on runtime. On ConDefects, S2 and S2-R passed both partitions on the same 98 tasks. Both missed ABC354 A and ABC285 A despite passing every visible example. The two workflows differed by 103 measured messages. These are observations of the browser product with one trial per cell. The underlying model version and token budget were unavailable.
+All four browser workflows passed the same 30 of 31 QuixBugs programs. Each timed out on one held-out Levenshtein case during collection. The S0 patch passed that case on a subsequent local execution, so this result depends on runtime. On ConDefects, S2 and S2-R tied for the highest pass count, repairing the same 98 of 100 tasks. Both missed ABC354 A and ABC285 A despite passing every visible example. Adding the reviewer produced no additional passing tasks on either dataset. On ConDefects the reviewed team used 303 browser messages, compared with 200 for the reviewer-free team. The browser exposed neither the underlying model version nor its token budget.
 
 \subsection{Full-dataset extension for GPT and local models}
 We applied the four workflows once to each original QuixBugs program and each breadth-sample ConDefects task using GPT-5.4 nano, Qwen2.5-Coder 1.5B and SmolLM2 1.7B. Each model already had 12 workflow results on three identical QuixBugs inputs. GPT also had all 400 ConDefects results. These 436 earlier observations and 1,136 newly scored trials cover all 1,572 combinations. The Muse browser product and the Gemini archive have separate measurement protocols.
@@ -226,6 +226,22 @@ Dataset & Model & S0 & S1 & S2 & S2-R\\\midrule
 \end{table}
 
 Both additional GPT models completed all 524 planned trials. On ConDefects, single-agent retry (S1) passed 79 tasks with GPT-4.1 mini and 68 with GPT-4o mini. The agent team (S2) passed 75 and 61, respectively. The same workflow ordering held on QuixBugs. These counts describe one trial per workflow and task. Reported tokens across the hosted extension cost \$0.7951 at uncached rates. Eight requests without confirmed usage retained \$0.0076 in reservations, giving a conservative combined bound of \$0.8027.
+
+\subsection{Workflow performance across the eight complete models}
+We counted one trial per workflow for each model and task in Tables~\ref{tab:full-models} and~\ref{tab:additional-models}. Each model received equal weight. Table~\ref{tab:workflow-comparison} reports the number of trials passing both test partitions. On QuixBugs the reviewed team (S2) led with 140 of 248 passes (56.5\%). On ConDefects the single agent with test feedback (S1) led with 280 of 800 (35.0\%), passing 40 more model--task pairs than S2.
+
+\begin{table}[ht]
+\centering\small
+\caption{Pass counts across eight models. The denominator for each workflow is eight models times the number of tasks in that dataset. Bold marks the highest observed count.}
+\label{tab:workflow-comparison}
+\begin{tabular}{lrrrrr}\toprule
+Dataset & Trials/workflow & S0 & S1 & S2 & S2-R\\\midrule
+QuixBugs & 248 & 125 & 134 & \textbf{140} & 135\\
+ConDefects & 800 & 238 & \textbf{280} & 240 & 252\\\bottomrule
+\end{tabular}
+\end{table}
+
+We paired the reviewed and reviewer-free outcomes on the same model and task. On QuixBugs, 14 pairs passed only with review and nine passed only without it, a net gain of five passes (2.0 percentage points). On ConDefects, 27 pairs passed only with review and 39 passed only without it, a net loss of 12 passes (1.5 percentage points). Each workflow generated its own candidate once per pair. The comparison therefore measures the outcome of the whole workflow and cannot isolate the effect of a reviewer decision on a fixed candidate.
 
 \section{Discussion}
 \subsection{Where extra calls go}
