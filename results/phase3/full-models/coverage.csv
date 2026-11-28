@@ -4,9 +4,9 @@ qwen,qwen2.5-coder-1.5b-instruct-q4_k_m,quixbugs,124,124,0,112,11,11,9,10,31,31,
 smollm2,smollm2-1.7b-instruct-q4_k_m,quixbugs,124,124,0,112,7,9,16,12,31,31,31,31,0,338421,64105
 gpt4o-mini,gpt-4o-mini-2024-07-18,quixbugs,124,124,0,124,23,27,25,22,31,31,31,31,0,193787,25392
 gpt41-mini,gpt-4.1-mini-2025-04-14,quixbugs,124,124,0,124,28,28,27,27,31,31,31,31,0,168999,29130
-olmo,olmo-2-0425-1b-instruct-q4_k_m,quixbugs,124,9,115,9,0,0,0,0,2,3,2,2,0,31212,7095
+olmo,olmo-2-0425-1b-instruct-q4_k_m,quixbugs,124,124,0,124,2,2,3,2,31,31,31,31,0,336677,82394
 granite,granite-3.3-2b-instruct-q4_k_m,quixbugs,124,124,0,124,12,12,16,17,31,31,31,31,0,293059,51902
-phi3,phi-3-mini-4k-instruct-q4,quixbugs,124,0,124,0,0,0,0,0,0,0,0,0,0,0,0
+phi3,phi-3-mini-4k-instruct-q4,quixbugs,124,124,0,124,14,18,15,18,31,31,31,31,0,283618,37888
 archive-gemini,gemini-3.5-flash-lite,quixbugs,124,124,0,0,30,30,30,30,31,31,31,31,0,0,0
 muse-web,Muse web (Edge),quixbugs,124,124,0,0,30,30,30,30,31,31,31,31,,0,0
 muse,muse-spark-1.3 (Meta API),quixbugs,124,0,124,0,0,0,0,0,0,0,0,0,0,0,0
@@ -16,7 +16,7 @@ smollm2,smollm2-1.7b-instruct-q4_k_m,condefects,400,400,0,400,3,4,9,5,100,100,10
 gpt4o-mini,gpt-4o-mini-2024-07-18,condefects,400,400,0,400,62,68,61,65,100,100,100,100,0,565116,187591
 gpt41-mini,gpt-4.1-mini-2025-04-14,condefects,400,400,0,400,74,79,75,77,100,100,100,100,0,469913,156842
 olmo,olmo-2-0425-1b-instruct-q4_k_m,condefects,400,400,0,400,1,3,1,2,100,100,100,100,0,911005,394907
-granite,granite-3.3-2b-instruct-q4_k_m,condefects,400,1,399,1,0,0,0,0,1,0,0,0,0,344,226
+granite,granite-3.3-2b-instruct-q4_k_m,condefects,400,400,0,400,12,15,10,16,100,100,100,100,0,955890,345056
 phi3,phi-3-mini-4k-instruct-q4,condefects,400,0,400,0,0,0,0,0,0,0,0,0,0,0,0
 archive-gemini,gemini-3.5-flash-lite,condefects,400,0,400,0,0,0,0,0,0,0,0,0,0,0,0
 muse-web,Muse web (Edge),condefects,400,400,0,0,96,97,98,98,100,100,100,100,,0,0
