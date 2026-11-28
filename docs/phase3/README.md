@@ -149,6 +149,8 @@ The local models use the following publisher releases. The local runner checks t
 | granite | [IBM Granite 3.3 2B Instruct](https://huggingface.co/ibm-granite/granite-3.3-2b-instruct-GGUF/tree/7cdf86ccd1f1bb3491c9b7017b033f2e51367397) | Q4_K_M |
 | phi3 | [Microsoft Phi-3 Mini 4K Instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/tree/a64113399c2f6b8ad3e11c394733a2ddadaa7f33) | Publisher Q4 |
 
+Each local inference slot has a 4,096-token context. Phi uses one slot and offloads 20 layers to fit the study GPU. The other models use two slots. The Phi server's rendered chat template retained the system instructions and user input in its user turn. These settings affect timing comparisons.
+
 ## Independent review and course submission
 
 Two team members each make a separate copy of the [blinded packet](../../results/phase3/review_packet.csv). Use the specification link and compare the candidate with the reference. Mark `correct` or `incorrect` and supply a short rationale or counterexample for each row. Preserve both original sets of judgments before discussing disagreements. The [key](../../results/phase3/review_key.json) maps packet IDs to model attempts after adjudication.

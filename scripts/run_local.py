@@ -51,6 +51,9 @@ def main():
             ap.error("GGUF checksum mismatch")
     alias, base, _ = PROFILES[args.profile]
     port = urlparse(base).port
+    # Phi's larger attention cache needs a smaller allocation on a 4 GiB GPU.
+    # Keep the same 4096-token context for each active request.
+    slots = 1 if args.profile == "phi3" else 2
     command = [
         args.server,
         "--model",
@@ -62,13 +65,13 @@ def main():
         "--port",
         str(port),
         "--ctx-size",
-        "8192",
+        str(4096 * slots),
         "--parallel",
-        "2",
+        str(slots),
         "--batch-size",
         "256",
         "--n-gpu-layers",
-        "99",
+        "20" if args.profile == "phi3" else "99",
         "--seed",
         "403",
     ]
@@ -91,7 +94,7 @@ def main():
             failed = []
             for cohort in args.cohort:
                 command = [sys.executable, "-u", str(ROOT / "scripts/run_phase3.py"),
-                           "--profile", args.profile, "--workers", "2", "--cohort", cohort]
+                           "--profile", args.profile, "--workers", str(slots), "--cohort", cohort]
                 for attempt in range(4):
                     with subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE,
                                           stderr=subprocess.STDOUT, text=True, errors="replace") as child:
